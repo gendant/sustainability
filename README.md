@@ -128,9 +128,9 @@ To better know what exactly does `sustainability` in the background for each run
 
 Visit the site [https://audits.digital](https://audits.digital), enter a URL and wait for the report to be generated for you. That's it.
 
-<img style="text-align: center;" src="https://raw.githubusercontent.com/auditsdigital/sustainability/master/assets/ui.png">
+<img style="text-align: center;" src="https://raw.githubusercontent.com/auditsdigital/sustainability/master/ui.png">
 
-<details><summary>NPM</summary>
+<details><summary>NPM - @auditsdigital/sustainability </summary>
 
 Install puppeteer (if you don't already have it installed):
 
@@ -138,7 +138,7 @@ Install puppeteer (if you don't already have it installed):
 
 Install sustainability locally:
 
-`npm i sustainability`
+`npm i @auditsdigital/sustainability`
 
 Now you can use it on your Node.js application. Take as example the following code:
 

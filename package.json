@@ -1,5 +1,5 @@
 {
-  "name": "sustainability",
+  "name": "@auditsdigital/sustainability",
   "version": "0.5.0",
   "description": "digital sustainability audits for the web",
   "main": "build/index.js",
