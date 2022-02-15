@@ -1,9 +1,9 @@
-import {PageContext} from '../types';
-import {PrivateSettings} from '../types/settings';
-import {CollectRobotsTraces, RobotsFormat} from '../types/traces';
-import Collect from './collect';
+import { PageContext } from '../types';
+import { CollectMeta } from '../types/audit';
+import { PrivateSettings } from '../types/settings';
+import { CollectRobotsTraces, RobotsFormat } from '../types/traces';
 import * as util from '../utils/utils';
-import {CollectMeta} from '../types/audit';
+import Collect from './collect';
 
 // Inspired from https://github.com/b4dnewz/robots-parse/blob/master/src/parser.ts work
 
@@ -21,7 +21,7 @@ export default class CollectRobots extends Collect {
 		settings: PrivateSettings
 	): Promise<CollectRobotsTraces | undefined> {
 		const debug = CollectRobots.meta.debug;
-		debug('running');
+		debug('running');		
 		try {
 			const patterns = {
 				agents: /^([Uu]ser-[Aa]gent:) (.+)$/,
@@ -43,9 +43,9 @@ export default class CollectRobots extends Collect {
 			debug('Fetching robots.txt');
 			const body = (await util.fetchRobots(host)) || undefined;
 			if (!body) {
-				throw new Error('');
+				throw new Error('Body is empty');
 			}
-
+			
 			const lines = body.match(/[^\r\n]+/g) ?? [];
 			let lastAgent = 'all';
 			const getMatches = (regexp: RegExp, line: string) =>

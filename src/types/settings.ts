@@ -1,9 +1,9 @@
-import { LaunchOptions } from 'puppeteer';
+import { BrowserConnectOptions, BrowserLaunchArgumentOptions, LaunchOptions, Product } from 'puppeteer';
 import Audit from '../audits/audit';
 import Collect from '../collect/collect';
 
 export interface DefaultSettings {
-	LAUNCH_SETTINGS: LaunchOptions;
+	LAUNCH_SETTINGS: LaunchPuppeteerOptions;
 	CONNECTION_SETTINGS: PrivateSettings;
 	CATEGORIES: {
 		server: { description: string };
@@ -16,6 +16,7 @@ export interface DefaultSettings {
 		webhook?: string;
 	};
 }
+
 
 export interface CollectorAndAudit {
 	collectors: Array<typeof Collect>;
@@ -59,10 +60,6 @@ export interface ConnectionSettings {
 	 * Should initialise a cold run to find any potential URL redirect. Defaults to true
 	 */
 	coldRun?: boolean;
-	/**
- * Enable or disable telemetry. Currently only sends report object.
- */
-	telemetry?: boolean
 }
 
 export interface PrivateSettings {
@@ -73,7 +70,6 @@ export interface PrivateSettings {
 	location: EmulatedLocation;
 	maxThrottle: number;
 	streams: boolean;
-	telemetry: boolean;
 	coldRun: boolean;
 }
 
@@ -100,4 +96,9 @@ interface EmulatedLocation {
 interface Viewport {
 	width: number;
 	height: number;
+}
+
+export type LaunchPuppeteerOptions = LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions & {
+	product?: Product;
+	extraPrefsFirefox?: Record<string, unknown>;
 }

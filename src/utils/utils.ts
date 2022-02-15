@@ -1,34 +1,21 @@
-import * as Debug from 'debug';
-import { Page, Request, LoadEvent } from 'puppeteer';
-import {
-	PageContext,
-	PromiseAllSettledFulfilled,
-	PromiseAllSettledRejected,
-	Tracker
-} from '../types';
-import memoizee = require('memoizee');
-import fetch from 'node-fetch';
 import AbortController from 'abort-controller';
+import fetch from 'cross-fetch';
+import * as Debug from 'debug';
+import * as memoizee from 'memoizee';
+import { HTTPRequest as Request, Page } from 'puppeteer';
 import {
-	getLogNormalScore,
-	sum,
-	groupBy,
-	linearInterpolation
+	getLogNormalScore, groupBy,
+	linearInterpolation, sum
 } from '../bin/statistics';
-import {
-	AuditByFailOrPassOrSkip,
-	Meta,
-	SkipMeta,
-	AuditReportFormat,
-	SuccessOrFailureMeta,
-	AuditsByCategory,
-	Result,
-	Report
-} from '../types/audit';
-import { Record, Headers } from '../types/traces';
 import { DEFAULT } from '../settings/settings';
+import {
+	PageContext, Tracker
+} from '../types';
+import {
+	AuditByFailOrPassOrSkip, AuditReportFormat, AuditsByCategory, AuditType, Meta, Report, Result, SkipMeta, SuccessOrFailureMeta
+} from '../types/audit';
 import { ConnectionSettings } from '../types/settings';
-import { TELEMETRY_API_URL } from '../references/references';
+import { CollectType, Headers, LoadEvent, Record, Traces } from '../types/traces';
 
 export function debugGenerator(namespace: string): Debug.IDebugger {
 	const debug = Debug(`sustainability: ${namespace}`);
@@ -38,7 +25,7 @@ export function debugGenerator(namespace: string): Debug.IDebugger {
 const logToConsole = Debug('sustainability:log');
 logToConsole.log = console.error.bind(console);
 
-export function log(message: string): void {
+export function log(message: string | unknown): void {
 	logToConsole(message);
 }
 
@@ -57,43 +44,54 @@ export async function scrollFunction(
 	debug('running scroll function');
 	const ableToScroll = await isPageAbleToScroll(page);
 	if (ableToScroll) {
-		await Promise.race([
-			page.evaluate(
-				maxScrollInterval =>
-					new Promise(resolve => {
-						let scrollTop = -1;
-						const interval = setInterval(() => {
-							window.scrollBy(0, 100);
-							const getScrollTop =
-								window.pageYOffset ||
-								document.documentElement.scrollTop ||
-								document.body.scrollTop;
-							if (getScrollTop !== scrollTop) {
-								scrollTop = getScrollTop;
-								return;
-							}
+	const maxScrollingTime = DEFAULT.CONNECTION_SETTINGS.maxScrollWaitingTime
+	let stopCallback: any = null;
+	const stopPromise = new Promise(x => (stopCallback = x));
+	const stopNavigation = setTimeout(() => stopCallback(()=>{
+		//@ts-ignore private _id
+		const pageId = page.mainFrame()._id;
+		debug(
+			`Forced end of scrolling for page ${pageId} because the URL surpassed the maxScrollingTime`
+		)
+		return
+		
+	}), maxScrollingTime);
+	const scrollAndClearTimeout = async ()=>{
+		await page.evaluate(
+			maxScrollInterval =>
+				new Promise(resolve => {
+					let scrollTop = -1;
+					const interval = setInterval(() => {
+						window.scrollBy(0, 100);
+						const getScrollTop =
+							window.pageYOffset ||
+							document.documentElement.scrollTop ||
+							document.body.scrollTop;
+						if (getScrollTop !== scrollTop) {
+							scrollTop = getScrollTop;
+							return;
+						}
+						clearInterval(interval);
+						resolve(undefined);
+					}, maxScrollInterval);
+				}),
+			maxScrollInterval
+		),
+		clearTimeout(stopNavigation);
 
-							clearInterval(interval);
-							resolve(undefined);
-						}, maxScrollInterval);
-					}),
-				maxScrollInterval
-			),
-			new Promise(resolve =>
-				setTimeout(
-					() => resolve(undefined),
-					DEFAULT.CONNECTION_SETTINGS.maxScrollWaitingTime
-				)
-			)
-		]);
 	}
+		await Promise.race([
+			scrollAndClearTimeout(),
+			stopPromise
+		]);
 
 	page.emit('scrollFinished');
 	debug('done scrolling');
+	}
 }
 
 export async function isPageAbleToScroll(page: Page) {
-	return page.evaluate(() => {
+	const result = await page.evaluate(() => {
 		const initialTopValue =
 			window.pageYOffset ||
 			document.documentElement.scrollTop ||
@@ -112,6 +110,9 @@ export async function isPageAbleToScroll(page: Page) {
 
 		return false;
 	});
+
+	return result
+
 }
 
 export async function navigate(
@@ -123,7 +124,7 @@ export async function navigate(
 ) {
 	const { page, url } = pageContext;
 	try {
-		// @ts-ignore private _id
+		//@ts-ignore private _id
 		const pageId = page.mainFrame()._id;
 		debug(`${pageId} Starting navigation to ${url}`);
 		let stopCallback: any = null;
@@ -156,43 +157,36 @@ export async function navigate(
 	}
 }
 
-export function parseAllSettled(
-	data: Array<PromiseAllSettledRejected | PromiseAllSettledFulfilled>,
-	audit?: boolean
-): any {
-	const parser = (
-		res: PromiseAllSettledFulfilled | PromiseAllSettledRejected
-	) => {
-		if (res.status === 'fulfilled' && res.value) {
-			return res.value;
-		}
-
-		if (res.status === 'rejected') {
-			return safeReject(new Error(`Failed with error: ${res.reason}`));
-		}
-	};
-
-	const result = data.map(res => {
-		return parser(res);
-	});
-
-	if (!audit) {
-		return Object.assign({}, ...result);
+function allSettledParser<T>(res: PromiseSettledResult<T>):T | undefined{
+	if (res.status === 'rejected') {
+		safeReject(new Error(`Promise failed with error: ${res.reason}`));
+		
+	}
+	
+	if (res.status === 'fulfilled' && res.value) {
+		return res.value;
 	}
 
-	return (
-		result
-			.filter(data => data)
-			// @ts-ignore
-			.flatMap((data: any) => {
-				const isArray = Array.isArray(data);
-				if (isArray) {
-					return data.map((d: any) => d.value);
-				}
+	return
 
-				return data;
-			})
-	);
+};
+
+export function parseAllSettledAudits(
+	data: PromiseSettledResult<PromiseSettledResult<AuditType>[]>
+): Result[]{
+   const result = allSettledParser(data)
+   
+   return result!.map(d=>allSettledParser(d)) as Result[] //fix this
+	
+}
+
+export function parseAllSettledTraces(
+	data: PromiseSettledResult<CollectType>[]
+): Traces{
+
+	const result = data.map(d=>allSettledParser(d))
+	return Object.assign({}, ...result)
+	
 }
 
 export function safeReject(error: Error, tracker?: Tracker) {
@@ -211,7 +205,7 @@ export function safeReject(error: Error, tracker?: Tracker) {
 		}
 	}
 
-	throw new Error(`Error: Navigation failed with message: ${error.message}`);
+	throw new Error(`Navigation failed with message: ${error.message}`);
 }
 
 export function createTracker(page: Page): Tracker {
@@ -224,9 +218,9 @@ export function createTracker(page: Page): Tracker {
 	return {
 		urls: () => Array.from(requests).map((r: any) => r.url()),
 		dispose: () => {
-			page.removeListener('request', onStarted);
-			page.removeListener('requestfinished', onFinished);
-			page.removeListener('requestfailed', onFinished);
+			page.off('request', onStarted);
+			page.off('requestfinished', onFinished);
+			page.off('requestfailed', onFinished);
 		}
 	};
 }
@@ -258,7 +252,7 @@ const isGreenServer = async (
 		return responseToJson;
 	} catch (error) {
 		log(
-			`Error: Failed to fetch response from green server API. ${error.message} ${url}`
+			`Error: Failed to fetch response from green server API. ${error} ${url}`
 		);
 		return await new Promise(resolve => resolve(undefined));
 	} finally {
@@ -291,7 +285,7 @@ export async function fetchRobots(
 
 		return responseText;
 	} catch (error) {
-		log(`Error: Failed to fetch robots.txt ${error.message} ${url}`);
+		log(`Error: Failed to fetch robots.txt ${error} ${url}`);
 		return await new Promise(resolve => resolve(undefined));
 	} finally {
 		clearTimeout(timeout);
@@ -302,9 +296,8 @@ export async function safeNavigateTimeout(
 	page: Page,
 	waitUntil: LoadEvent,
 	maxNavigationTime: number,
-	debug?: CallableFunction,
-	cb?: CallableFunction
-) {
+	debug?: CallableFunction
+	) {
 	if (debug) {
 		debug('Waiting for navigation to load');
 	}
@@ -316,7 +309,16 @@ export async function safeNavigateTimeout(
 	};
 
 	const stopPromise = new Promise(x => (stopCallback = x));
-	const stopNavigation = setTimeout(() => stopCallback(cb), maxNavigationTime);
+	const stopNavigation = setTimeout(() => stopCallback(()=>{
+		if(debug){
+			//@ts-ignore private _id
+			const pageId = page.mainFrame()._id;
+			debug(
+				`Forced end of navigation for page ${pageId} because the URL surpassed the maxNavigationTime`
+			)
+		}
+		return
+	}), maxNavigationTime);
 	return Promise.race([navigate(), stopPromise]);
 }
 
@@ -577,21 +579,7 @@ function getReportObject(reqReport: Report) {
 		passes: totalPasses,
 		fails: totalFails,
 		skips: totalSkips,
-		carbonf: +cfAuditType.extendedInfo.value.extra.carbonfootprint[0],
-		transferSize: +cfAuditType.extendedInfo.value.extra.totalTransfersize[0]
-	}
-}
-
-export async function sendTelemetry(body: any) {
-	try {
-		await fetch(TELEMETRY_API_URL, {
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			method: 'POST',
-			body: JSON.stringify({ report: getReportObject(body) })
-		})
-	} catch (error) {
-		log(error)
+		carbonf: +cfAuditType.extendedInfo?.value.extra.carbonfootprint[0],
+		transferSize: +cfAuditType.extendedInfo?.value.extra.totalTransfersize[0]
 	}
 }

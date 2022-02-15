@@ -5,7 +5,7 @@
  * gas is converted to its CO2 equivalent in terms of global warming potential over 100 year
  * (for instance, 1 gram of methane emitted has the same global warming impact during 100 years
  *  as ~34 grams of CO2 over the same period).
- * @see https://github.com/tmrowco/electricitymap-contrib/blob/master/config/co2eq_parameters.json
+ * @see https://github.com/electricitymap/electricitymap-contrib/blob/master/config/co2eq_parameters.json#L39
  */
 export const defaultCarbonIntensity: [number, string] = [
 	301.13684338512996,
@@ -22,8 +22,6 @@ export const variables: Variables = {
 	defaultDailyVisitors: [100, 'visits/day'],
 	defaultCarbonIntensity
 };
-
-export const TELEMETRY_API_URL = 'https://vtdnv367qg.execute-api.eu-central-1.amazonaws.com/default/DAStoDB'
 
 interface Variables {
 	[key: string]: [number, string];

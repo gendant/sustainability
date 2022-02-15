@@ -2,10 +2,11 @@ import { Sustainability } from '.';
 
 (async () => {
 	Sustainability.auditStream.pipe(process.stdout);
-	await Sustainability.audit('https://www.example.org', {
-		connectionSettings: { streams: false, coldRun: true }
+	const report = await Sustainability.audit('https://reddit.com', {
+		connectionSettings: { streams: false, coldRun: false}
 	});
 
+	console.log(JSON.stringify(report))
 
 
 })();

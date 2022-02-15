@@ -1,9 +1,9 @@
-import Collect from './collect';
-import { PrivateSettings } from '../types/settings';
-import * as util from '../utils/utils';
-import { CollectMeta } from '../types/audit';
 import { PageContext } from '../types';
+import { CollectMeta } from '../types/audit';
+import { PrivateSettings } from '../types/settings';
 import { CollectAnimationsTraces, SingleAnimationFormat } from '../types/traces';
+import * as util from '../utils/utils';
+import Collect from './collect';
 
 /**
  * @overview: Get CSSTransitions/CSSAnimations, stuff that requires CPU process and see if they are stoped when tab is switched
@@ -63,7 +63,7 @@ export default class CollectAnimations extends Collect {
 			const notReactiveAnimations: SingleAnimationFormat[] = [];
 			const notReactiveAnimationsSet = new Set<string>();
 			const hasAnimations = await new Promise((resolve, reject) => {
-				// @ts-ignore scrollFinished (custom event emited in lazyMedia collect)
+				//@ts-ignore scrollFinished (custom event emited in lazyMedia collect)
 				page.once('scrollFinished', async function scrollHandler() {
 					try {
 						const animationsArray = Array.from(animations.entries());
@@ -95,7 +95,8 @@ export default class CollectAnimations extends Collect {
 						util.log(`Error: Animations collect failed with message: ${error}`);
 						reject(false);
 					} finally {
-						page.removeListener('scrollFinished', scrollHandler);
+						//@ts-ignore scrollFinished (custom event emited in lazyMedia collect)
+						page.off('scrollFinished', scrollHandler);
 					}
 				});
 			});

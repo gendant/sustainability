@@ -1,37 +1,52 @@
 <h2 style="text-align: center;">
-<img style="text-align: center;" src="https://raw.githubusercontent.com/digital-audits/sustainability/master/logo.png">
+<img style="text-align: center;" src="https://raw.githubusercontent.com/auditsdigital/sustainability/master/logo.jpg">
 </h2>
  
-# Digital sustainability audits
+# Digital Sustainability Audits
 
-[![Sustainability](https://img.shields.io/badge/DAS%20verified%20sustainable-https://audits.digital-blue.svg?logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48c3ZnIHdpZHRoPSIxMDguNjVtbSIgaGVpZ2h0PSI5NS44NjZtbSIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMTA4LjY1IDk1Ljg2NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI%2BIDxtZXRhZGF0YT4gIDxyZGY6UkRGPiAgIDxjYzpXb3JrIHJkZjphYm91dD0iIj4gICAgPGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ%2BICAgIDxkYzp0eXBlIHJkZjpyZXNvdXJjZT0iaHR0cDovL3B1cmwub3JnL2RjL2RjbWl0eXBlL1N0aWxsSW1hZ2UiLz4gICAgPGRjOnRpdGxlLz4gICA8L2NjOldvcms%2BICA8L3JkZjpSREY%2BIDwvbWV0YWRhdGE%2BIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC01MS4xNzkgLTc3LjkyMikiPiAgPHBhdGggZD0ibTEzMy40NCA3Ny45MjItNTcuNDQ5IDUwLjUzIDQyLjcwMiAxNC40MjYgNy4zMDQ1LTIwLjczNmM3LjE5MzYgMy4wMzQyIDEzLjY3NSA3LjYzMDEgMTkuMDA3IDEzLjQ3OHptMTEuNTY1IDU3LjY5OC0wLjQ1MDYyIDE3LjYxMy0yNS44NjEtMTAuMzU1LTIuMTY1MiA2LjE0NzQtMjcuMTQzLTkuNTYxMiAwLjM5Njg4IDExLjcxMS0xNC45OTgtOC45MDg1LTE0LjMwNiAwLjQ4NDcyYy01Ljk4MzIgOS4xNzI1LTkuMjE5MSAxOS45NjktOS4zMDIzIDMxLjAzNmgxMDguNjVjLTAuMTA2NjMtMTQuMjAzLTUuNDAwNy0yNy44MzktMTQuODE5LTM4LjE2OHptLTg0LjQ2OCAyNi44NjloOTEuNjM1YTQ4LjEyMiAzNy41MDggMCAwIDEgMi4zMDI3IDExLjE3OGgtOTYuMjRhNDguMTIyIDM3LjUwOCAwIDAgMSAyLjMwMjctMTEuMTc4eiIgZmlsbD0iIzAwMDA4MCIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2Utd2lkdGg9Ii4yNjQ1OCIvPiAgPHRleHQgZm9udC1mYW1pbHk9IidDZW50dXJ5IFNjaG9vbGJvb2sgTCciIGZvbnQtc2l6ZT0iMTkuNzU2cHgiIGZvbnQtd2VpZ2h0PSJib2xkIiBzdHlsZT0ibGluZS1oZWlnaHQ6MS4yNTtzaGFwZS1pbnNpZGU6dXJsKCNyZWN0MTgpO3doaXRlLXNwYWNlOnByZSIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIvPiA8L2c%2BPC9zdmc%2B&link=https://audits.digital&style=social)](https://audits.digital)
-[![npm](https://badgen.now.sh/npm/v/sustainability)](https://www.npmjs.com/package/sustainability)
-[![Build Status](https://travis-ci.org/digital-audits/sustainability.svg?branch=master)](https://travis-ci.org/digital-audits/sustainability)
-[![Coverage Status](https://coveralls.io/repos/github/digital-audits/sustainability/badge.svg?branch=master)](https://coveralls.io/github/digital-audits/sustainability?branch=master)
-[![Service](https://img.shields.io/badge/service-up-informational)](https://audits.digital)
+[![Build Status](https://github.com/auditsdigital/sustainability/actions/workflows/build.yaml/badge.svg)](https://github.com/auditsdigital/sustainability/actions/workflows/build.yaml)
+[![npm](https://img.shields.io/npm/v/sustainability)](https://www.npmjs.com/package/sustainability)
+[![npm download count](https://img.shields.io/npm/dm/sustainability)](https://www.npmjs.com/package/sustainability)
+[![Coverage Status](https://coveralls.io/repos/github/auditsdigital/sustainability/badge.svg?branch=master)](https://coveralls.io/github/auditsdigital/sustainability?branch=master)
+[![Known Vulnerabilities](https://snyk.io/test/github/auditsdigital/sustainability/badge.svg)](https://snyk.io/test/github/auditsdigital/sustainability)
+[![MIT License](https://img.shields.io/npm/l/sustainability.svg)](#license)
 
-> A de facto standard for the Internet carbon footprint. Computes the carbon footprint (CF) index, determines the energy source of servers, the usage of HTTP2.0, WebP image format, lazy loading on images, font subsetting, etc.
-> Effectively generates a customized report. May cut down your site's CF up to the 70% (no kidding, research [here](https://github.com/digital-audits/sustainability/blob/master/RESEARCH.md)).
+> A new methodology for assessing the Internet carbon footprint and sustainability of digital services. Computes the carbon footprint (CF) index, determines the energy source of servers, the usage of HTTP2.0, WebP image format, lazy loading on images, font subsetting, etc.
+> Effectively generates a customized sustainability report with a set of helpful comments to reduce the CF.
 
-- [Installation](#Installation)
-- [Usage](#Usage)
-- [Debugging](#Debugging)
-- [API](#API)
-- [With a server](#with-a-server)
-- [Give it a spin](#give-it-a-spin)
-- [FAQS](#FAQS)
+- [Problematic](#Problematic)
+- [Our solution](#Our-solution)
+- [How it works](#How-it-works)
+- [Diagrams](#Diagrams)
+- [Try it now](#Try-it-now)
 - [Contributions](#contributions-are-welcomed)
+- [License](#License)
+- [Links](#Links)
 
-## What does it do
+## Problematic
 
-You supply a valid and reachable URL, maybe one that you have just finished to build or is already live, and evaluates the use given to the resources from a sustainability point of view.
+Increasing Internet connectivity in everyday life fosters new, or otherwise more energy-intensive, forms of demand that may counterbalance energy savings [[1](https://doi.org/10.1016/j.erss.2018.01.018)].
+As example, the rising of web applications and websites. They provide an engaging user experience with the development of a wide range of functionalities and interactive elements but still, they may have an impact on the environment.
 
-Under the hood it relies on the excellent
-[Puppeteer] library which uses the Headless Chrome Node API, maintained by the Google Chrome team.
 
-## What does it audit
+## Our solution
 
-Audits are divided into two categories: server and design.
+Digital Sustainability Audits (DAS) is our solution for an environmentally sustainable transformation of digital resources.
+
+Some of its key features are:
+
+- Automated
+- Lighting fast
+- Platform agnostic
+- Extensible
+- User & developer friendly
+
+
+## How it works
+
+With the help of several audits or test suits we are able to assess digital sustainability of any service with only one thing: a valid URL.
+
+At this moment, audits are divided into two categories: server and design.
 
 ### Server audits
 
@@ -96,9 +111,26 @@ Is it inlining big JS and CSS assets and thus preventing the browser from storin
 </details>
 </p>
 
-## Installation
+> Are you ready to try it? 
+> - Jump right into the [demo part](#Try-it-now) and see it by yourself!
 
-<details><summary>Installation steps</summary>
+Or stay for getting to know better the architecture with our diagrams.
+
+
+## Basic architecture
+
+To better know what exactly does `sustainability` in the background for each run, please [refer to here](https://github.com/auditsdigital/sustainability/blob/master/CONTRIBUTION-dev.md).
+
+
+## Try it now
+
+### User Interface 
+
+Visit the site [https://audits.digital](https://audits.digital), enter a URL and wait for the report to be generated for you. That's it.
+
+<img style="text-align: center;" src="https://raw.githubusercontent.com/auditsdigital/sustainability/master/assets/ui.png">
+
+<details><summary>NPM</summary>
 
 Install puppeteer (if you don't already have it installed):
 
@@ -108,17 +140,7 @@ Install sustainability locally:
 
 `npm i sustainability`
 
-Install sustainability CLI:
-
-`npm i -g sustainability`
-
-</details>
-
-## Usage
-
-<details><summary>Locally</summary>
-
-Take as example the following code:
+Now you can use it on your Node.js application. Take as example the following code:
 
 ```js
 const { Sustainability } = require("sustainability");
@@ -164,6 +186,8 @@ Note that you will also need to have a local installation of Redis or a running 
 
 - REDIS_HOST (default to 127.0.0.1)
 - REDIS_PORT (default to 6379)
+- FRONTEND_URL (for setting up CORS, default to '*', defaults to null when `NODE_ENV=production` is set)
+- REDIS_URL (default to unset)
 
 ### With docker compose
 
@@ -174,33 +198,13 @@ cd docker/
 docker-compose up -d
 ```
 
-2. Audit any URL with a POST request at `http://localhost/service/add` including a JSON body param `url` containing the corresponding URL to audit. <br/>
+2. Open up a web browser and visit `http://localhost:8081`
 
-```sh
-curl -d "url=https://www.example.org" http://localhost/service/add
-```
+3. Enter a url and run audits
 
 </details>
 
-## Debugging
-
-<details><summary>Debugging steps</summary>
-
-You can enable verbose logging to see the API in action.
-This is done by setting the `DEBUG` environmental variable to `sustainability:*.` or with the `-d` option in the CLI.
-
-For example:
-
-```bash
-# Linux
-DEBUG=sustainability:* node index.js
-# Windows Powershell
-$env:DEBUG=sustainability:* node index.js
-```
-
-</details>
-
-## API
+<details><summary>API</summary>
 
 ### class: Sustainability
 
@@ -229,7 +233,6 @@ Sustainability module provides a method to run the sustainability audits on a UR
         - `accuracy`<[number]> Optional non-negative accuracy value
     - `coldRun` <[boolean]> Should initialise a cold run to find any potential URL redirect. Defaults to true.
     - `streams` <[boolean]> Should push individual audits results as they go. Defaults to false.
-    - `telemetry` <[boolean]> Should send completely anonimously telemetry [see sendTelemetry function](https://github.com/digital-audits/sustainability/blob/master/src/utils/utils.ts). Defaults to true.
     </details>
     <details><summary>Sustainability.auditStream</summary><br/>
 
@@ -247,49 +250,45 @@ For example:
 ```
 
 </details>
-</p>
-
-## With a server
-
-Typically you would like sustainability to process the maximum number of processes at the same time. One way to do this, is implementing a queue management system with a set of service workers. To see a full working example with sustainability, please refer to [this repo](https://github.com/sirdmon/sustainable).
-
-## Give it a spin
-
-Visit [DAS site](https://audits.digital/) to test the software with **environmental awareness**.
-
-## FAQS
-
-<details><summary>Oh wow, what's the story behind this? Did you just sit down and make this one day?</summary><br/>
-
-There is a short and a long history.
-
-The short history is that the ICT in the worst case scenario will be responsible for 1/4 of the world's energy demand in the next 10 years and I'm not alone on this [external ref](https://www.nature.com/articles/d41586-018-06610-y).
-
-This is due to a faster digital transformation, a data-oriented society and a higher availability in developing countries.
-
-Knowing the adverse situation we are facing, I think that we can do much more to make sure our digital services engage with sustainability issues.
-
-The long history is that I can tell you from my first-hand experience that currently, we are not teaching our professionals to build a responsible and sustainable digital world, and neither we are consuming them with this in mind.
-
-Hopefully this tool will trigger the right actions in both sides.
-
 </details>
 
-<details><summary>I’d like to learn more about this topic. Would you be able to share articles or research?</summary><br/>
 
-This was initially part of my own [master's degree thesis work](http://dx.doi.org/10.13140/RG.2.2.31368.44809). <br/>
-Also, I had lately added some interesting research and insights [here](https://github.com/digital-audits/sustainability/blob/master/RESEARCH.md).
+<details><summary>Debugging</summary>
+
+You can enable verbose logging to see the API in action.
+This is done by setting the `DEBUG` environmental variable to `sustainability:*.` or with the `-d` option in the CLI.
+
+For example:
+
+```bash
+# Linux
+DEBUG=sustainability:* node index.js
+# Windows Powershell
+$env:DEBUG=sustainability:* node index.js
+```
 
 </details>
 
 ## Contributions are welcomed
 
-This is open-source software. I highly encourage everyone interested to help pushing up this project.\
-Core development? Join the team! Make sure you read first the [contributions-dev notes.](https://github.com/digital-audits/sustainability/blob/master/CONTRIBUTION-dev.md)\
-Found and issue, visibility, business aspects, sharing your thoughts? [Open a new issue](https://github.com/digital-audits/sustainability/issues/new)\
+This is open-source software. We highly encourage everyone interested to help pushing up this project.\
+Core development? Join the team! Make sure you read first the [contributions-dev notes.](https://github.com/auditsdigital/sustainability/blob/master/CONTRIBUTION-dev.md)\
+Found and issue, visibility, business aspects, sharing your thoughts? [Open a new issue](https://github.com/auditsdigital/sustainability/issues/new)\
 Sponsoring? Help us to keep the project running in [Open Collective](https://opencollective.com/das).
 
 [puppeteer]: https://github.com/GoogleChrome/puppeteer "Puppeteer"
 [puppeteer.launch]: https://github.com/GoogleChrome/puppeteer/blob/v1.5.0/docs/api.md#puppeteerlaunchoptions "puppeteer.launch"
 [page]: https://github.com/GoogleChrome/puppeteer/blob/v1.5.0/docs/api.md#class-page "Page"
 [browser]: https://github.com/puppeteer/puppeteer/blob/v1.5.0/docs/api.md#class-browser "Browser"
+
+## License
+
+All the code and documents are licensed under MIT.
+
+
+## Useful links
+
+- [1] https://doi.org/10.1016/j.erss.2018.01.018.
+- DAS video https://www.youtube.com/watch?v=3kDEQy2p4NY 
+
+

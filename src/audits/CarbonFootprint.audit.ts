@@ -1,10 +1,10 @@
-import Audit from './audit';
+import { sum } from '../bin/statistics';
 import { variables } from '../references/references';
 import { DEFAULT } from '../settings/settings';
-import { sum } from '../bin/statistics';
-import * as util from '../utils/utils';
 import { Meta, Result, SkipResult } from '../types/audit';
 import { Traces } from '../types/traces';
+import * as util from '../utils/utils';
+import Audit from './audit';
 
 const MB_TO_BYTES = 1024 * 1024;
 const GB_TO_MB = 1024;
@@ -17,7 +17,7 @@ export default class CarbonFootprintAudit extends Audit {
 			failureTitle: `Carbon footprint is high`,
 			description: `The carbon footprint is the total amount of greenhouse gases released into the atmosphere for directly or indirectly supporting a particular activity. Keeping it as low as possible it’s key to prevent the climate change.`,
 			category: 'server',
-			collectors: ['transfercollect']
+			collectors: ['transfercollect', 'redirectcollect']
 		} as Meta;
 	}
 

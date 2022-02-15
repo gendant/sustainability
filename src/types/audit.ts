@@ -1,4 +1,4 @@
-import { LoadEvent } from 'puppeteer';
+import { LoadEvent } from "./traces";
 
 export interface Meta {
 	/** String identifier of the audit */
@@ -135,3 +135,5 @@ export interface SkipMeta {
 	/** Audit description, showcasinng importance and useful information */
 	description: string;
 }
+
+export type AuditType = Result | SkipResult | undefined

@@ -1,3 +1,7 @@
+import AvoidableBotTrafficAudit from "../../src/audits/AvoidableBotTraffic.audit"
+import AvoidInlineAssetsAudit from "../../src/audits/AvoidInlineAssets.audit"
+import AvoidURLRedirectsAudit from "../../src/audits/AvoidURLRedirects.audits"
+import CarbonFootprintAudit from "../../src/audits/CarbonFootprint.audit"
 import CookieOptimisation from "../../src/audits/CookieOptimisation.audit"
 import LeverageBrowserCachingAudit from "../../src/audits/LeverageBrowserCaching.audit"
 import NoConsoleLogsAudit from "../../src/audits/NoConsoleLogs.audit"
@@ -6,22 +10,17 @@ import ReactiveAnimationsAudit from "../../src/audits/ReactiveAnimations.audit"
 import UsesCompressionAudit from "../../src/audits/UsesCompression.audit"
 import UsesDarkModeAudit from "../../src/audits/UsesDarkMode.audit"
 import UsesFontSubsettingAudit from "../../src/audits/UsesFontSubsetting.audit"
-import { Result } from "../../src/types/audit"
-import {
-    Traces, Headers, ConsoleMessageFormat, AnimationsFormat, Sheets, SubfontFormat, InlineStyles,
-    MediaFormat, InlineScripts, RedirectResponse, MetaTagFormat, RobotsFormat, Record
-} from "../../src/types/traces"
-import * as fetch from 'node-fetch';
-
 import UsesGreenServerAudit from "../../src/audits/UsesGreenServer.audit"
 import UsesHTTP2Audit from "../../src/audits/UsesHTTP2.audit"
 import UsesLazyLoadingAudit from "../../src/audits/UsesLazyLoading.audit"
 import UsesWebmVideoFormatAudit from "../../src/audits/UsesWebmVideoFormat.audit"
 import UsesWebpImageFormatAudit from "../../src/audits/UsesWebpImageFormat.audit"
-import AvoidInlineAssetsAudit from "../../src/audits/AvoidInlineAssets.audit"
-import AvoidURLRedirectsAudit from "../../src/audits/AvoidURLRedirects.audits"
-import AvoidableBotTrafficAudit from "../../src/audits/AvoidableBotTraffic.audit"
-import CarbonFootprintAudit from "../../src/audits/CarbonFootprint.audit"
+import { Result } from "../../src/types/audit"
+import {
+    AnimationsFormat, ConsoleMessageFormat, Headers, InlineScripts, InlineStyles,
+    MediaFormat, MetaTagFormat, Record, RedirectResponse, RobotsFormat, Sheets, SubfontFormat, Traces
+} from "../../src/types/traces"
+
 const traces = {
     server: { hosts: ['localhost'] },
     cookies: [
@@ -66,13 +65,13 @@ const skipTraces = {
 } as Traces
 
 describe('CookieOptimisation Audit', () => {
-    it('fails when has big sized cookies or/and duplicated cookies', () => {
-        const auditResult = CookieOptimisation.audit(traces)
+    it('fails when has big sized cookies or/and duplicated cookies', async () => {
+        const auditResult = await CookieOptimisation.audit(traces)
         expect(auditResult?.extendedInfo?.value.size).toEqual([{ name: 'fatCookie', size: 1030 }])
         expect(auditResult?.extendedInfo?.value.dup).toEqual(['dupCookie'])
     })
-    it('extendedInfo only contains dup field when only duplicated cookies found', () => {
-        const auditResult = CookieOptimisation.audit(
+    it('extendedInfo only contains dup field when only duplicated cookies found', async () => {
+        const auditResult = await CookieOptimisation.audit(
             {
                 server: {
                     hosts:
@@ -117,8 +116,8 @@ describe('CookieOptimisation Audit', () => {
             } as Traces) as Result
         expect(auditResult?.extendedInfo?.value).toHaveProperty('dup')
     })
-    it('extendedInfo only contains size field when only big sized cookies found', () => {
-        const auditResult = CookieOptimisation.audit(
+    it('extendedInfo only contains size field when only big sized cookies found', async () => {
+        const auditResult = await CookieOptimisation.audit(
             {
                 server: {
                     hosts:
@@ -166,8 +165,8 @@ describe('CookieOptimisation Audit', () => {
         const auditResultKeys = Object.keys(!auditResult)
         expect(auditResultKeys.includes('extendedInfo')).toBeFalsy()
     })
-    it('big sized cookies dont include duplications if any', () => {
-        const auditResult = CookieOptimisation.audit(
+    it('big sized cookies dont include duplications if any', async () => {
+        const auditResult = await CookieOptimisation.audit(
             {
                 server: {
                     hosts:
@@ -202,15 +201,15 @@ describe('CookieOptimisation Audit', () => {
         expect(auditResult?.extendedInfo?.value.size).toEqual([{ name: 'cookie', size: 5555 }])
 
     })
-    it('skips when no cookie are in traces', () => {
-        const auditResult = CookieOptimisation.audit({ server: { hosts: ['localhost'] } } as Traces)
+    it('skips when no cookie are in traces', async () => {
+        const auditResult = await CookieOptimisation.audit({ server: { hosts: ['localhost'] } } as Traces)
         expect(auditResult?.scoreDisplayMode).toEqual('skip')
     })
 })
 
 describe('LeverageBrowserCaching audit', () => {
-    it('ignores cross site assets', () => {
-        const auditResult = LeverageBrowserCachingAudit.audit({
+    it('ignores cross site assets', async () => {
+        const auditResult = await LeverageBrowserCachingAudit.audit({
             server: {
                 hosts: ['localhost']
             },
@@ -245,8 +244,8 @@ describe('LeverageBrowserCaching audit', () => {
 
         expect(auditResult.score).toEqual(1)
     })
-    it('ignores non cacheable assets (resource type)', () => {
-        const auditResult = LeverageBrowserCachingAudit.audit({
+    it('ignores non cacheable assets (resource type)', async () => {
+        const auditResult = await LeverageBrowserCachingAudit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -279,8 +278,8 @@ describe('LeverageBrowserCaching audit', () => {
         expect(auditResult.score).toEqual(1)
 
     })
-    it('ignores assets with implicit non caching policy in request headers', () => {
-        const auditResult = LeverageBrowserCachingAudit.audit({
+    it('ignores assets with implicit non caching policy in request headers', async () => {
+        const auditResult = await LeverageBrowserCachingAudit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -313,8 +312,8 @@ describe('LeverageBrowserCaching audit', () => {
 
         expect(auditResult.score).toEqual(1)
     })
-    it('ignores assets with invalid cache lifetime', () => {
-        const auditResult = LeverageBrowserCachingAudit.audit({
+    it('ignores assets with invalid cache lifetime', async () => {
+        const auditResult = await LeverageBrowserCachingAudit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -347,8 +346,8 @@ describe('LeverageBrowserCaching audit', () => {
         expect(auditResult.score).toEqual(1)
 
     })
-    it('ignores assets with cache hit probability higher than threshold', () => {
-        const auditResult = LeverageBrowserCachingAudit.audit({
+    it('ignores assets with cache hit probability higher than threshold', async () => {
+        const auditResult = await LeverageBrowserCachingAudit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -380,8 +379,8 @@ describe('LeverageBrowserCaching audit', () => {
         } as Traces)
         expect(auditResult.score).toEqual(1)
     })
-    it('extendedInfo has totalWastedBytes and records field for failed audits', () => {
-        const auditResult = LeverageBrowserCachingAudit.audit({
+    it('extendedInfo has totalWastedBytes and records field for failed audits', async () => {
+        const auditResult = await LeverageBrowserCachingAudit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -420,8 +419,8 @@ describe('LeverageBrowserCaching audit', () => {
 })
 
 describe('NoConsoleLogs audit', () => {
-    it('ignores duplicated console logs', () => {
-        const auditResult = NoConsoleLogsAudit.audit({
+    it('ignores duplicated console logs', async () => {
+        const auditResult = await NoConsoleLogsAudit.audit({
             console: [
                 { text: 'digital sustainability audits', type: 'text' },
                 { text: 'digital sustainability audits', type: 'text' }
@@ -434,23 +433,23 @@ describe('NoConsoleLogs audit', () => {
 
     })
 
-    it('passess successful audits', () => {
-        const auditResult = NoConsoleLogsAudit.audit({
+    it('passess successful audits', async () => {
+        const auditResult = await NoConsoleLogsAudit.audit({
             console: [] as ConsoleMessageFormat[]
         } as Traces)
         expect(auditResult.score).toBe(1)
 
     })
-    it('fails audits without console trace (error)', () => {
-        const auditResult = NoConsoleLogsAudit.audit({
+    it('fails audits without console trace (error)', async () => {
+        const auditResult = await NoConsoleLogsAudit.audit({
         } as Traces)
         expect(auditResult.score).toBe(0)
 
     })
 })
 describe('PixelEnergyEfficiency audit', () => {
-    it('passess successful audits', () => {
-        const auditResult = PixelEnergyEfficiencyAudit.audit(
+    it('passess successful audits', async () => {
+        const auditResult = await PixelEnergyEfficiencyAudit.audit(
             {
                 screenshot: { power: 10 }
             } as Traces)
@@ -458,22 +457,22 @@ describe('PixelEnergyEfficiency audit', () => {
     })
 })
 describe('ReactiveAnimations audit', () => {
-    it('skips when no animations in traces', () => {
-        const auditResult = ReactiveAnimationsAudit.audit(
+    it('skips when no animations in traces', async () => {
+        const auditResult = await ReactiveAnimationsAudit.audit(
             {
 
             } as Traces)
         expect(auditResult.scoreDisplayMode).toEqual('skip')
     })
-    it('passes successful audits', () => {
-        const auditResult = ReactiveAnimationsAudit.audit(
+    it('passes successful audits', async () => {
+        const auditResult = await ReactiveAnimationsAudit.audit(
             {
                 animations: { notReactive: [] } as AnimationsFormat
             } as Traces) as Result
         expect(auditResult.score).toBe(1)
     })
-    it('fails audits with non reactive animations', () => {
-        const auditResult = ReactiveAnimationsAudit.audit(
+    it('fails audits with non reactive animations', async () => {
+        const auditResult = await ReactiveAnimationsAudit.audit(
             {
                 animations: { notReactive: [{ name: 'anim', type: 'CSS', selector: '#myanim' }] }
             } as Traces) as Result
@@ -482,8 +481,8 @@ describe('ReactiveAnimations audit', () => {
 
 })
 describe('UsesCompression audit', () => {
-    it('ignores records with invalid gzip size (0 bytes)', () => {
-        const auditResult = UsesCompressionAudit.audit(
+    it('ignores records with invalid gzip size (0 bytes)', async () => {
+        const auditResult = await UsesCompressionAudit.audit(
             {
                 server: { hosts: ['localhost'] },
                 record: [
@@ -504,8 +503,8 @@ describe('UsesCompression audit', () => {
         )
         expect(auditResult.score).toBe(1)
     })
-    it('ignores records with invalid MIME types', () => {
-        const auditResult = UsesCompressionAudit.audit(
+    it('ignores records with invalid MIME types', async () => {
+        const auditResult = await UsesCompressionAudit.audit(
             {
                 server: { hosts: ['localhost'] },
                 record: [
@@ -526,8 +525,8 @@ describe('UsesCompression audit', () => {
         )
         expect(auditResult.score).toBe(1)
     })
-    it('ignores records with gzip savings lower than threshold', () => {
-        const auditResult = UsesCompressionAudit.audit(
+    it('ignores records with gzip savings lower than threshold', async () => {
+        const auditResult = await UsesCompressionAudit.audit(
             {
                 server: { hosts: ['localhost'] },
                 record: [
@@ -550,8 +549,8 @@ describe('UsesCompression audit', () => {
         )
         expect(auditResult.score).toBe(1)
     })
-    it('ignores records already compressed', () => {
-        const auditResult = UsesCompressionAudit.audit(
+    it('ignores records already compressed', async () => {
+        const auditResult = await UsesCompressionAudit.audit(
             {
                 server: { hosts: ['localhost'] },
                 record: [
@@ -572,8 +571,8 @@ describe('UsesCompression audit', () => {
         )
         expect(auditResult.score).toBe(1)
     })
-    it('ignores records with compressed size lower than gzipped size', () => {
-        const auditResult = UsesCompressionAudit.audit(
+    it('ignores records with compressed size lower than gzipped size', async () => {
+        const auditResult = await UsesCompressionAudit.audit(
             {
                 server: { hosts: ['localhost'] },
                 record: [
@@ -594,8 +593,8 @@ describe('UsesCompression audit', () => {
         )
         expect(auditResult.score).toBe(1)
     })
-    it('ignores cross-site requests', () => {
-        const auditResult = UsesCompressionAudit.audit(
+    it('ignores cross-site requests', async () => {
+        const auditResult = await UsesCompressionAudit.audit(
             {
                 server: { hosts: ['localhost'] },
                 record: [
@@ -618,8 +617,8 @@ describe('UsesCompression audit', () => {
         )
         expect(auditResult.score).toBe(1)
     })
-    it('reports low nginx gzip compression level', () => {
-        const auditResult = UsesCompressionAudit.audit(
+    it('reports low nginx gzip compression level', async () => {
+        const auditResult = await UsesCompressionAudit.audit(
             {
                 server: { hosts: ['localhost'] },
                 record: [
@@ -643,8 +642,8 @@ describe('UsesCompression audit', () => {
         expect(auditResult.score).toBe(0)
         expect(auditResult).toHaveProperty('errorMessage')
     })
-    it('ignores repeated records', () => {
-        const auditResult = UsesCompressionAudit.audit(
+    it('ignores repeated records', async () => {
+        const auditResult = await UsesCompressionAudit.audit(
             {
                 server: { hosts: ['localhost'] },
                 record: [
@@ -685,8 +684,8 @@ describe('UsesCompression audit', () => {
 })
 
 describe('UsesDarkMode audit', () => {
-    it('passess successful audits', () => {
-        const auditResult = UsesDarkModeAudit.audit(
+    it('passess successful audits', async () => {
+        const auditResult = await UsesDarkModeAudit.audit(
             {
                 screenshot: { hasDarkMode: true }
             } as Traces
@@ -696,8 +695,8 @@ describe('UsesDarkMode audit', () => {
 })
 
 describe('UsesFontSubsetting audit', () => {
-    it('skips audits without css traces', () => {
-        const auditResult = UsesFontSubsettingAudit.audit({
+    it('skips audits without css traces', async () => {
+        const auditResult = await UsesFontSubsettingAudit.audit({
             css: {
                 sheets: [] as Sheets[],
                 info: {
@@ -708,8 +707,8 @@ describe('UsesFontSubsetting audit', () => {
         )
         expect(auditResult.scoreDisplayMode).toEqual('skip')
     })
-    it('skips audits without font traces', () => {
-        const auditResult = UsesFontSubsettingAudit.audit({
+    it('skips audits without font traces', async () => {
+        const auditResult = await UsesFontSubsettingAudit.audit({
             css: {
                 sheets: [
                     {
@@ -730,8 +729,8 @@ describe('UsesFontSubsetting audit', () => {
 
     })
 
-    it('skips audits without at least one resource of font type', () => {
-        const auditResult = UsesFontSubsettingAudit.audit({
+    it('skips audits without at least one resource of font type', async () => {
+        const auditResult = await UsesFontSubsettingAudit.audit({
             record: [
                 {
                     request: {
@@ -770,8 +769,8 @@ describe('UsesFontSubsetting audit', () => {
         expect(auditResult.scoreDisplayMode).toEqual('skip')
 
     })
-    it('passess successful audits', () => {
-        const auditResult = UsesFontSubsettingAudit.audit({
+    it('passess successful audits', async () => {
+        const auditResult = await UsesFontSubsettingAudit.audit({
             record: [
                 {
                     request: {
@@ -810,8 +809,8 @@ describe('UsesFontSubsetting audit', () => {
         } as Traces) as Result
         expect(auditResult.score).toEqual(1)
     })
-    it('fails on audits which have not subset fonts and reports their name and the set of glyphs', () => {
-        const auditResult = UsesFontSubsettingAudit.audit({
+    it('fails on audits which have not subset fonts and reports their name and the set of glyphs', async () => {
+        const auditResult = await UsesFontSubsettingAudit.audit({
             record: [
                 {
                     request: {
@@ -852,8 +851,8 @@ describe('UsesFontSubsetting audit', () => {
         expect(auditResult.extendedInfo?.value[0]).toHaveProperty('name')
     })
 
-    it('fails on audits without font face property', () => {
-        const auditResult = UsesFontSubsettingAudit.audit({
+    it('fails on audits without font face property', async () => {
+        const auditResult = await UsesFontSubsettingAudit.audit({
             record: [
                 {
                     request: {
@@ -890,8 +889,8 @@ describe('UsesFontSubsetting audit', () => {
         } as Traces) as Result
         expect(auditResult.score).toEqual(0)
     })
-    it('reports trace fontnames when those were not obtained when walking the css styles', () => {
-        const auditResult = UsesFontSubsettingAudit.audit({
+    it('reports trace fontnames when those were not obtained when walking the css styles', async () => {
+        const auditResult = await UsesFontSubsettingAudit.audit({
             record: [
                 {
                     request: {
@@ -992,8 +991,8 @@ describe('UsesGreenServer audit', () => {
     })
 })
 describe('UsesHTTP2 audit', () => {
-    it('ignores request without a protocol field', () => {
-        const auditResult = UsesHTTP2Audit.audit({
+    it('ignores request without a protocol field', async () => {
+        const auditResult = await UsesHTTP2Audit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -1005,8 +1004,8 @@ describe('UsesHTTP2 audit', () => {
         } as Traces)
         expect(auditResult.score).toEqual(1)
     })
-    it('ignores responses served from service workers', () => {
-        const auditResult = UsesHTTP2Audit.audit({
+    it('ignores responses served from service workers', async () => {
+        const auditResult = await UsesHTTP2Audit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -1025,8 +1024,8 @@ describe('UsesHTTP2 audit', () => {
 
     })
 
-    it('ignores cross site requests', () => {
-        const auditResult = UsesHTTP2Audit.audit({
+    it('ignores cross site requests', async () => {
+        const auditResult = await UsesHTTP2Audit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -1043,8 +1042,8 @@ describe('UsesHTTP2 audit', () => {
         } as Traces)
         expect(auditResult.score).toEqual(1)
     })
-    it('passess records with a data request protocol', () => {
-        const auditResult = UsesHTTP2Audit.audit({
+    it('passess records with a data request protocol', async () => {
+        const auditResult = await UsesHTTP2Audit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -1061,8 +1060,8 @@ describe('UsesHTTP2 audit', () => {
         } as Traces)
         expect(auditResult.score).toEqual(1)
     })
-    it('passess records with a h2 request protocol', () => {
-        const auditResult = UsesHTTP2Audit.audit({
+    it('passess records with a h2 request protocol', async () => {
+        const auditResult = await UsesHTTP2Audit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -1079,8 +1078,8 @@ describe('UsesHTTP2 audit', () => {
         } as Traces)
         expect(auditResult.score).toEqual(1)
     })
-    it('fails on non-h2 audits', () => {
-        const auditResult = UsesHTTP2Audit.audit({
+    it('fails on non-h2 audits', async () => {
+        const auditResult = await UsesHTTP2Audit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -1098,8 +1097,8 @@ describe('UsesHTTP2 audit', () => {
         expect(auditResult.score).toEqual(0)
 
     })
-    it('passess successful audits', () => {
-        const auditResult = UsesHTTP2Audit.audit({
+    it('passess successful audits', async () => {
+        const auditResult = await UsesHTTP2Audit.audit({
             server: { hosts: ['localhost'] },
             record: [
                 {
@@ -1129,15 +1128,15 @@ describe('UsesHTTP2 audit', () => {
 })
 
 describe('UsesLazyLoading audit', () => {
-    it('skips audits with undefined lazymedia traces, ex: when page is unable to scroll', () => {
-        const auditResult = UsesLazyLoadingAudit.audit({
+    it('skips audits with undefined lazymedia traces, ex: when page is unable to scroll', async () => {
+        const auditResult = await UsesLazyLoadingAudit.audit({
 
         } as Traces)
         expect(auditResult.scoreDisplayMode).toEqual('skip')
 
     })
-    it('skips audits without media traces', () => {
-        const auditResult = UsesLazyLoadingAudit.audit({
+    it('skips audits without media traces', async () => {
+        const auditResult = await UsesLazyLoadingAudit.audit({
             lazyMedia: {
                 lazyImages: [] as string[],
                 lazyVideos: [] as string[]
@@ -1150,8 +1149,8 @@ describe('UsesLazyLoading audit', () => {
         expect(auditResult.scoreDisplayMode).toEqual('skip')
 
     })
-    it('skips audits with non visible (under the fold) media traces', () => {
-        const auditResult = UsesLazyLoadingAudit.audit({
+    it('skips audits with non visible (under the fold) media traces', async () => {
+        const auditResult = await UsesLazyLoadingAudit.audit({
             lazyMedia: {
                 lazyImages: [] as string[],
                 lazyVideos: [] as string[]
@@ -1168,8 +1167,8 @@ describe('UsesLazyLoading audit', () => {
         } as Traces)
         expect(auditResult.scoreDisplayMode).toEqual('skip')
     })
-    it('passess successful audits', () => {
-        const auditResult = UsesLazyLoadingAudit.audit({
+    it('passess successful audits', async () => {
+        const auditResult = await UsesLazyLoadingAudit.audit({
             media: {
                 images: [
                     {
@@ -1189,16 +1188,16 @@ describe('UsesLazyLoading audit', () => {
 })
 describe('UsesWebmVideoFormat audit', () => {
 
-    it('skips audits without media video traces', () => {
-        const auditResult = UsesWebmVideoFormatAudit.audit({
+    it('skips audits without media video traces', async  () => {
+        const auditResult =await  UsesWebmVideoFormatAudit.audit({
             media: {
                 videos: [] as MediaFormat[]
             }
         } as Traces)
         expect(auditResult.scoreDisplayMode).toEqual('skip')
     })
-    it('ignores videos with empty src atribute', () => {
-        const auditResult = UsesWebmVideoFormatAudit.audit({
+    it('ignores videos with empty src atribute', async () => {
+        const auditResult = await UsesWebmVideoFormatAudit.audit({
             lazyMedia: {
                 lazyVideos: [] as string[]
             },
@@ -1214,8 +1213,8 @@ describe('UsesWebmVideoFormat audit', () => {
         } as Traces)
         expect(auditResult.scoreDisplayMode).toEqual('skip')
     })
-    it('uses lazy videos too', () => {
-        const auditResult = UsesWebmVideoFormatAudit.audit({
+    it('uses lazy videos too', async () => {
+        const auditResult = await UsesWebmVideoFormatAudit.audit({
             lazyMedia: {
                 lazyVideos: ['http://localhost/lazyvideo.mp4']
             },
@@ -1231,8 +1230,8 @@ describe('UsesWebmVideoFormat audit', () => {
         } as Traces) as Result
         expect(auditResult.score).toEqual(0)
     })
-    it('ignores repeated videos src', () => {
-        const auditResult = UsesWebmVideoFormatAudit.audit({
+    it('ignores repeated videos src', async () => {
+        const auditResult = await UsesWebmVideoFormatAudit.audit({
             lazyMedia: {
                 lazyVideos: [] as string[]
             },
@@ -1255,8 +1254,8 @@ describe('UsesWebmVideoFormat audit', () => {
         expect(auditResult.score).toEqual(0)
         expect(auditResult?.extendedInfo?.value.length).toEqual(1)
     })
-    it('fails audits without all webm videos', () => {
-        const auditResult = UsesWebmVideoFormatAudit.audit({
+    it('fails audits without all webm videos', async () => {
+        const auditResult = await UsesWebmVideoFormatAudit.audit({
             lazyMedia: {
                 lazyVideos: [] as string[]
             },
@@ -1279,8 +1278,8 @@ describe('UsesWebmVideoFormat audit', () => {
         expect(auditResult.score).toEqual(0)
 
     })
-    it('passess successful audits', () => {
-        const auditResult = UsesWebmVideoFormatAudit.audit({
+    it('passess successful audits', async () => {
+        const auditResult = await UsesWebmVideoFormatAudit.audit({
             lazyMedia: {
                 lazyVideos: ['http://localhost/lazyvideo3.webm'] as string[]
             },
@@ -1306,8 +1305,8 @@ describe('UsesWebmVideoFormat audit', () => {
 })
 
 describe('UsesWebpImageFormat audit', () => {
-    it('skips audits with undefined lazymedia traces, ex: when page is unable to scroll', () => {
-        const auditResult = UsesWebpImageFormatAudit.audit({
+    it('skips audits with undefined lazymedia traces, ex: when page is unable to scroll', async() => {
+        const auditResult = await UsesWebpImageFormatAudit.audit({
             record: [
                 {
                     request: {
@@ -1326,8 +1325,8 @@ describe('UsesWebpImageFormat audit', () => {
         expect(auditResult.scoreDisplayMode).toEqual('skip')
 
     })
-    it('ignores audits without media images', () => {
-        const auditResult = UsesWebpImageFormatAudit.audit({
+    it('ignores audits without media images', async () => {
+        const auditResult = await UsesWebpImageFormatAudit.audit({
             lazyMedia: {
                 lazyImages: [] as string[]
             },
@@ -1345,8 +1344,8 @@ describe('UsesWebpImageFormat audit', () => {
 
         expect(auditResult.scoreDisplayMode).toEqual('skip')
     })
-    it('ignores audits that dont have at least one image type of (png, jpg, gif, webp)', () => {
-        const auditResult = UsesWebpImageFormatAudit.audit({
+    it('ignores audits that dont have at least one image type of (png, jpg, gif, webp)', async () => {
+        const auditResult = await UsesWebpImageFormatAudit.audit({
             lazyMedia: {
                 lazyImages: [] as string[]
             },
@@ -1365,9 +1364,9 @@ describe('UsesWebpImageFormat audit', () => {
 
         expect(auditResult.scoreDisplayMode).toEqual('skip')
     })
-    it('shortens base64 images and long image url', () => {
+    it('shortens base64 images and long image url', async () => {
         const originalB64Image = 'data:image/jpeg;base64,/9j/4RiDRXhpZgAATU0AK4RiDRXhpZgAATU0AK4RiDRXhpZgAATU0AK'
-        const auditResult = UsesWebpImageFormatAudit.audit({
+        const auditResult = await UsesWebpImageFormatAudit.audit({
             lazyMedia: {
                 lazyImages: [] as string[]
             },
@@ -1396,8 +1395,8 @@ describe('UsesWebpImageFormat audit', () => {
         expect(auditResult?.extendedInfo?.value[0].length).toBeLessThan(originalB64Image.length)
 
     })
-    it('passess successful audits', () => {
-        const auditResult = UsesWebpImageFormatAudit.audit({
+    it('passess successful audits', async () => {
+        const auditResult = await UsesWebpImageFormatAudit.audit({
             lazyMedia: {
                 lazyImages: ['http://localhost/image2.svg'] as string[]
             },
@@ -1418,8 +1417,8 @@ describe('UsesWebpImageFormat audit', () => {
 })
 
 describe('AvoidInlineAssets audit', () => {
-    it('fails on audits with big sized inline css or js assets', () => {
-        const auditResult = AvoidInlineAssetsAudit.audit({
+    it('fails on audits with big sized inline css or js assets', async () => {
+        const auditResult = await AvoidInlineAssetsAudit.audit({
             css: {
                 info: {
                     styles: [
@@ -1441,8 +1440,8 @@ describe('AvoidInlineAssets audit', () => {
         expect(auditResult.score).toEqual(0)
         expect(auditResult?.extendedInfo?.value.length).toEqual(1)
     })
-    it('passess successful audits', () => {
-        const auditResult = AvoidInlineAssetsAudit.audit({
+    it('passess successful audits', async () => {
+        const auditResult = await AvoidInlineAssetsAudit.audit({
             css: {
                 info: {
                     styles: [
@@ -1466,8 +1465,8 @@ describe('AvoidInlineAssets audit', () => {
     })
 })
 describe('AvoidURLRedirects audit', () => {
-    it('ignores empty redirects', () => {
-        const auditResult = AvoidURLRedirectsAudit.audit({
+    it('ignores empty redirects', async () => {
+        const auditResult = await AvoidURLRedirectsAudit.audit({
             server: { hosts: ['localhost'] },
             redirect: [
 
@@ -1475,8 +1474,8 @@ describe('AvoidURLRedirects audit', () => {
         } as Traces)
         expect(auditResult.score).toEqual(1)
     })
-    it('ignores cross site redirects', () => {
-        const auditResult = AvoidURLRedirectsAudit.audit({
+    it('ignores cross site redirects', async () => {
+        const auditResult = await AvoidURLRedirectsAudit.audit({
             server: { hosts: ['localhost'] },
             redirect: [
                 {
@@ -1489,8 +1488,8 @@ describe('AvoidURLRedirects audit', () => {
         } as Traces)
         expect(auditResult.score).toEqual(1)
     })
-    it('fails on audits with redirects originated at the same host', () => {
-        const auditResult = AvoidURLRedirectsAudit.audit({
+    it('fails on audits with redirects originated at the same host', async () => {
+        const auditResult = await AvoidURLRedirectsAudit.audit({
             server: { hosts: ['localhost'] },
             redirect: [
                 {
@@ -1506,15 +1505,33 @@ describe('AvoidURLRedirects audit', () => {
     })
 })
 describe('AvoidableBotTraffic audit', () => {
-    it('skips audits without robots traces', () => {
-        const auditResult = AvoidableBotTrafficAudit.audit({
+    it('skips audits without robots traces', async () => {
+        const auditResult = await AvoidableBotTrafficAudit.audit({
         } as Traces)
         expect(auditResult.scoreDisplayMode).toEqual('skip')
     })
-    it('fails audits with poorly configured robots.txt file', () => {
-        const auditResult = AvoidableBotTrafficAudit.audit({
+    it('fails audits with poorly configured robots.txt file', async () => {
+        const auditResult = await AvoidableBotTrafficAudit.audit({
             metatag: [] as MetaTagFormat[],
-            record: [] as Record[],
+            record: [
+                {
+                    request: {
+                        url:new URL('localhost:2030'),
+                        requestId: '',
+                        resourceType: 'eventsource',
+                        method: 'GET',
+                        headers: {},
+                        timestamp: 0
+                    },
+                    response: {
+                        headers: {}
+                    },
+                    CDP: {}
+                }
+            ] as Record[],
+            server: {
+                hosts: ['localhost:2030']
+            },
             robots: {
                 agents: {
                 },
@@ -1527,8 +1544,8 @@ describe('AvoidableBotTraffic audit', () => {
 
         expect(auditResult.score).toEqual(0)
     })
-    it('passess successful audits with robots metatag or X-Robots-Tag header but warns to do otherwise ', () => {
-        const auditResult = AvoidableBotTrafficAudit.audit({
+    it('passess successful audits with robots metatag or X-Robots-Tag header but warns to do otherwise ',async  () => {
+        const auditResult = await AvoidableBotTrafficAudit.audit({
             metatag: [
                 {
                     attr: [
@@ -1540,11 +1557,23 @@ describe('AvoidableBotTraffic audit', () => {
             ] as MetaTagFormat[],
             record: [
                 {
+                    request: {
+                        url: new URL('http://localhost.com'),
+                        requestId: '',
+                        resourceType: 'eventsource',
+                        method: 'GET',
+                        headers: {},
+                        timestamp: 0
+                    },
                     response: {
                         headers: { 'content-type': 'text/plain', 'x-robots-tag': 'allow' } as Headers
-                    }
+                    },
+                    CDP: {}
                 }
-            ],
+            ] as Record[],
+            server: {
+                hosts: ['localhost.com']
+            },
             robots: {
                 agents: {},
                 allow: [],
@@ -1556,10 +1585,62 @@ describe('AvoidableBotTraffic audit', () => {
         expect(auditResult.score).toEqual(1)
         expect(auditResult?.errorMessage).toBeTruthy()
     })
-    it('passess successful audits with disallow all UA', () => {
-        const auditResult = AvoidableBotTrafficAudit.audit({
+    it('ignores third party requests including robots metatag or X-Robots-Tag header', async  () => {
+        const auditResult = await AvoidableBotTrafficAudit.audit({
+            metatag: [
+            ] as MetaTagFormat[],
+            record: [
+                {
+                    request: {
+                        url: new URL('http://www.host.com'),
+                        requestId: '',
+                        resourceType: 'eventsource',
+                        method: 'GET',
+                        headers: {},
+                        timestamp: 0
+                    },
+                    response: {
+                        headers: { 'content-type': 'text/plain', 'x-robots-tag': 'allow' } as Headers
+                    },
+                    CDP: {}
+                }
+            ] as Record[],
+            server: {
+                hosts: ['localhost']
+            },
+            robots: {
+                agents: {},
+                allow: [],
+                disallow: [],
+                host: '',
+                sitemaps: []
+            } as RobotsFormat
+        } as Traces) as Result
+        expect(auditResult.score).toEqual(0)
+        expect(auditResult?.errorMessage).toBeUndefined()
+    })
+    it('passess successful audits with disallow all UA',async  () => {
+        const auditResult = await AvoidableBotTrafficAudit.audit({
             metatag: [] as MetaTagFormat[],
-            record: [] as Record[],
+            server: {
+                hosts: ['localhost:2030']
+            },
+            record: [
+                {
+                    request: {
+                        url:new URL('localhost:2030'),
+                        requestId: '',
+                        resourceType: 'eventsource',
+                        method: 'GET',
+                        headers: {},
+                        timestamp: 0
+                    },
+                    response: {
+                        headers: {}
+                    },
+                    CDP: {}
+                }
+            ] as Record[],
             robots: {
                 agents: {
                     all: {
@@ -1575,10 +1656,28 @@ describe('AvoidableBotTraffic audit', () => {
         } as Traces) as Result
         expect(auditResult.score).toEqual(1)
     })
-    it('passess successful audits specific UA rules', () => {
-        const auditResult = AvoidableBotTrafficAudit.audit({
+    it('passess successful audits specific UA rules', async () => {
+        const auditResult = await AvoidableBotTrafficAudit.audit({
             metatag: [] as MetaTagFormat[],
-            record: [] as Record[],
+            server: {
+                hosts: ['localhost:2030']
+            },
+            record: [
+                {
+                    request: {
+                        url:new URL('localhost:2030'),
+                        requestId: '',
+                        resourceType: 'eventsource',
+                        method: 'GET',
+                        headers: {},
+                        timestamp: 0
+                    },
+                    response: {
+                        headers: {}
+                    },
+                    CDP: {}
+                }
+            ] as Record[],
             robots: {
                 agents: {
                     'spider-bot': {

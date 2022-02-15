@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import * as minimist from 'minimist';
 import * as Debug from 'debug';
+import * as fs from 'fs';
+import * as minimist from 'minimist';
 import { Sustainability } from '.';
 import { AuditSettings } from './types';
-import * as fs from 'fs';
 import * as util from './utils/utils';
 const version: string = require('../package.json').version;
 const name: string = require('../package.json').name;
@@ -51,7 +51,6 @@ if (argv.help) {
     --nosandbox                   Launches puppeteer with [’--no-sandbox’, ’--disable-setuid-sandbox’]
     --debug or -d                 Enables verbose logging.
     --version or -v               Prints out ${name} version
-	--notelemetry                 Disables telemetry (completely anonimous and only sends output)
     `);
 	process.exit(0);
 }
@@ -74,10 +73,6 @@ if (argv.viewport && argv.viewport === 'mobile') {
 
 if (argv.nosandbox) {
 	debug('Set nosandbox opt in puppeteer launch');
-}
-
-if (argv.notelemetry) {
-	debug('Disabled telemetry')
 }
 
 try {
@@ -117,13 +112,7 @@ const options: AuditSettings = {
 					? {
 						maxNavigationTime: parsedMaxNav(argv.maxnav)
 					}
-					: {}),
-				...(argv.notelemetry
-					? {
-						telemetry: false
-					}
-					: {}
-				)
+					: {})
 			}
 		}
 		: {})

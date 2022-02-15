@@ -1,10 +1,10 @@
-import Collect from './collect';
-import { PageContext } from '../types';
-import * as util from '../utils/utils';
 import { ConsoleMessage } from 'puppeteer';
-import { CollectConsoleTraces, ConsoleMessageFormat } from '../types/traces';
+import { PageContext } from '../types';
 import { CollectMeta } from '../types/audit';
 import { PrivateSettings } from '../types/settings';
+import { CollectConsoleTraces, ConsoleMessageFormat } from '../types/traces';
+import * as util from '../utils/utils';
+import Collect from './collect';
 
 export default class CollectConsole extends Collect {
 	static get meta() {
@@ -32,16 +32,15 @@ export default class CollectConsole extends Collect {
 					type: message.type(),
 					text: message.text()
 				};
-				/*
+			/*
 			Console log client messages. Useful for debugging page evaluate
 			*/
-				/*
+								
+				// for (let i = 0; i < message.args().length; ++i) {
+				// 	debug(`${i}: ${message.args()[i]}`);
+				// }
 				
-								for (let i = 0; i < message.args().length; ++i) {
-									debug(`${i}: ${message.args()[i]}`);
-								}
 				
-				*/
 				results.push(information);
 			});
 			if (settings.streams)
@@ -57,7 +56,7 @@ export default class CollectConsole extends Collect {
 				console: results
 			};
 		} catch (error) {
-			util.log(`Error: Console collect failed with message: ${error.message}`);
+			util.log(`Error: Console collect failed with message: ${error}`);
 			return undefined;
 		}
 	}

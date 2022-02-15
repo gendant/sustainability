@@ -1,15 +1,15 @@
-import { LoadEvent, Page } from 'puppeteer';
-import { DEFAULT } from '../settings/settings';
-import path = require('path');
-import fs = require('fs');
-import { Tracker, PageContext, AuditSettings } from '../types';
-import * as util from '../utils/utils';
-import { PrivateSettings, ConnectionSettings } from '../types/settings';
-import { CollectorsIds, PassContext } from '../types/audit';
+import { EventEmitter, once } from 'events';
+import * as fs from 'fs';
+import * as path from 'path';
+import { Page } from 'puppeteer';
 import Collect from '../collect/collect';
-import { Traces } from '../types/traces';
+import { DEFAULT } from '../settings/settings';
 import { auditStream } from '../sustainability/stream';
-import { once, EventEmitter } from 'events';
+import { AuditSettings, PageContext, Tracker } from '../types';
+import { AuditType, CollectorsIds } from '../types/audit';
+import { PrivateSettings } from '../types/settings';
+import { Traces } from '../types/traces';
+import * as util from '../utils/utils';
 
 const debug = util.debugGenerator('Commander');
 
@@ -61,41 +61,39 @@ class Commander {
 
 			return page;
 		} catch (error) {
-			throw new Error(`Setup error ${error.message}`);
+			throw new Error(`Setup error ${error}`);
 		}
 	}
 
-	async evaluate(pageContext: PageContext): Promise<Array<Promise<any>>> {
+	async evaluate(pageContext: PageContext): Promise<PromiseSettledResult<AuditType>[]> {
 		if (this.settings.streams) return this.dynamicEvaluate(pageContext);
 
 		return this.staticEvaluate(pageContext);
 	}
 
-	async staticEvaluate(pageContext: PageContext): Promise<Array<Promise<any>>> {
+	async staticEvaluate(pageContext: PageContext): Promise<PromiseSettledResult<AuditType>[]> {
 		try {
 			debug('Static evaluate');
 			debug('Runnining collectors');
-			// @ts-ignore
 			const traces = await Promise.allSettled(
 				this.audits.collectors.map(collect =>
 					collect.collect(pageContext, this.settings)
 				)
 			);
 			debug('Finished collectors now parsing the traces');
-			const parsedTraces = util.parseAllSettled(traces);
+			const parsedTraces = util.parseAllSettledTraces(traces);
 			debug('Running audits');
-			// @ts-ignore
 			return Promise.allSettled(
 				this.audits.audits.map(audit => audit.audit(parsedTraces))
 			);
 		} catch (error) {
-			throw new Error(`Error: Commander failed with ${error.message}`);
+			throw new Error(`Error: Commander failed with ${error}`);
 		}
 	}
 
 	async dynamicEvaluate(
 		pageContext: PageContext
-	): Promise<Array<Promise<any>>> {
+	): Promise<PromiseSettledResult<AuditType>[]> {
 		debug('Dynamic evaluate');
 		debug('Scheduling collectors');
 		const runAuditsMap = new Map<string, Array<typeof Collect>>();
@@ -123,7 +121,7 @@ class Commander {
 			schedulerArray,
 			pageContext
 		);
-		// @ts-ignore
+		
 		return Promise.allSettled(auditResults);
 	}
 
@@ -152,12 +150,11 @@ class Commander {
 				return false;
 			});
 			if (filteredCollectInstances.length) {
-				// @ts-ignore
 				const traces = await Promise.allSettled([
 					...collectInstances.map(c => c.collect(pageContext, this.settings))
 				]);
 				debug('parsing traces');
-				const parsedTraces = util.parseAllSettled(traces);
+				const parsedTraces = util.parseAllSettledTraces(traces);
 				globalTraces = { ...globalTraces, ...parsedTraces };
 				collectInstances.forEach(collect =>
 					globalEventEmitter.emit(collect.meta.id)

@@ -1,8 +1,8 @@
-import Collect from './collect';
-import {PageContext} from '../types';
+import { PageContext } from '../types';
+import { CollectMeta } from '../types/audit';
+import { CollectHtmlTraces } from '../types/traces';
 import * as util from '../utils/utils';
-import {CollectMeta} from '../types/audit';
-import {CollectHtmlTraces} from '../types/traces';
+import Collect from './collect';
 
 export default class CollectHTML extends Collect {
 	static get meta() {
@@ -37,7 +37,7 @@ export default class CollectHTML extends Collect {
 				html: result
 			};
 		} catch (error) {
-			util.log(`Error:Console collect failed with message: ${error.message}`);
+			util.log(`Error:Console collect failed with message: ${error}`);
 			return undefined;
 		}
 	}

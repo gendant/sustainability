@@ -1,13 +1,13 @@
-import { Sustainability } from '../src';
-import Connection from '../src/connection/connection';
-import Commander from '../src/commander/commander'
-
-import { AuditSettings } from '../src/types';
+import * as fetch from 'cross-fetch';
 import fastify, { FastifyInstance } from 'fastify';
-import { Server, IncomingMessage, ServerResponse } from 'http';
+import { IncomingMessage, Server, ServerResponse } from 'http';
 import * as path from 'path';
-import { Page, Browser } from 'puppeteer'
-import * as fetch from 'node-fetch'
+import { Browser, Page } from 'puppeteer';
+import { Sustainability } from '../src';
+import Commander from '../src/commander/commander';
+import Connection from '../src/connection/connection';
+import { AuditSettings } from '../src/types';
+
 
 const server: FastifyInstance<
 	Server,
@@ -45,42 +45,28 @@ describe('Sustainability', () => {
 	it('works with default options', async () => {
 		const report = await runAudit('animations', {
 			launchSettings: {
-				headless: true,
 				timeout: 0
 			},
-			connectionSettings: { telemetry: false }
 		})
 		expect(report).toBeTruthy()
 	})
 	it('works on redirected URLs', async () => {
-		const report = await runAudit('health', { connectionSettings: { telemetry: false } })
+		const report = await runAudit('health')
 		expect(report).toBeTruthy()
 	})
 	it('works with coldRun disabled and streams enabled', async () => {
-		await runAudit('animations', { connectionSettings: { telemetry: false, coldRun: false, streams: true } })
+		await runAudit('animations', { connectionSettings: { coldRun: false, streams: true } })
 		Sustainability.auditStream.pipe(process.stdout);
 		expect(true).toBeTruthy()
 	})
 	it('works when custom browser is passed', async () => {
 		const browser = await Connection.setUp()
 		await runAudit('animations', {
-			browser,
-			connectionSettings: { telemetry: false }
+			browser
 		})
+		await browser.close()
 		expect(true).toBeTruthy()
 	})
-	it('sends telemetry when enabled', async () => {
-		await runAudit('health')
-		const fetchedURLCalls = fetchMock.mock.calls.map(fetch => fetch[0])
-		expect(fetchedURLCalls).toContain('https://vtdnv367qg.execute-api.eu-central-1.amazonaws.com/default/DAStoDB')
-	})
-	it('does not send telemetry when disabled', async () => {
-		await runAudit('health', { connectionSettings: { telemetry: false } })
-		const fetchedURLCalls = fetchMock.mock.calls.map(fetch => fetch[0])
-		expect(fetchedURLCalls.includes('https://vtdnv367qg.execute-api.eu-central-1.amazonaws.com/default/DAStoDB')).toBe(false)
-	})
-
-
 })
 
 describe('targeted tests to improve coverage', () => {
@@ -102,9 +88,7 @@ describe('targeted tests to improve coverage', () => {
 	it('test with wrong process env bin chrome', async () => {
 		process.env.CHROME_BIN = '/usr/local/bin/chrome'
 		try {
-			await runAudit('animations', {
-				connectionSettings: { telemetry: false }
-			})
+			await runAudit('animations')
 		} catch (error) {
 			expect(true).toBeTruthy()
 		}
@@ -114,7 +98,7 @@ describe('targeted tests to improve coverage', () => {
 			await runAudit('animations', {
 				browser: {
 					newPage: async () => new Promise((resolve) => resolve({} as Page))
-				} as Browser, connectionSettings: { coldRun: false, telemetry: false }
+				} as Browser, connectionSettings: { coldRun: false}
 			})
 		} catch (error) {
 			expect(true).toBeTruthy()

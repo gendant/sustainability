@@ -1,18 +1,15 @@
-import {Meta, Result, SkipResult} from '../types/audit';
-import {Traces} from '../types/traces';
+import { AuditType, Meta } from '../types/audit';
+import { Traces } from '../types/traces';
 
 export default class Audit {
 	static get meta(): Meta {
 		return {} as Meta;
 	}
 
-	static audit(
+	static async audit(
 		traces: Traces
-	):
-		| Promise<Result | SkipResult | undefined>
-		| Result
-		| SkipResult
-		| undefined {
-		return {} as Result | SkipResult;
+	): Promise<AuditType>
+ {
+		return {} as Promise<AuditType>;
 	}
 }

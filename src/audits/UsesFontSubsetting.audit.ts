@@ -1,8 +1,8 @@
-import Audit from './audit';
-import csstree = require('css-tree');
-import * as util from '../utils/utils';
+import { Meta, Result, SkipResult } from '../types/audit';
 import { SubfontFormat, Traces } from '../types/traces';
-import { Result, SkipResult, Meta } from '../types/audit';
+import * as util from '../utils/utils';
+import Audit from './audit';
+import * as csstree from 'css-tree'
 
 /**
  * @description Find non-local fonts (i.e downloaded) and assert whether they are a subset.
@@ -29,7 +29,7 @@ export default class UsesFontSubsettingAudit extends Audit {
 	 * 	2-Filter out those that are not included in the fonts traces.
 	 *
 	 */
-	static audit(traces: Traces): Result | SkipResult {
+	static async audit(traces: Traces): Promise<Result | SkipResult> {
 		const debug = util.debugGenerator('UsesFontSubsetting Audit');
 		const allCssSheets = [...traces.css.sheets, ...traces.css.info.styles];
 		const isAuditApplicable = (): boolean => {

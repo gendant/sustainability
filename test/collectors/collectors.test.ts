@@ -1,39 +1,32 @@
-import { PageContext } from '../../src/types';
-import { Browser } from 'puppeteer';
+import * as fetch from 'cross-fetch';
 import fastify, { FastifyInstance } from 'fastify';
-import { Server, IncomingMessage, ServerResponse } from 'http';
+import * as fs from 'fs';
+import { IncomingMessage, Server, ServerResponse } from 'http';
 import * as path from 'path';
 import * as puppeteer from 'puppeteer';
-import * as util from '../../src/utils/utils';
-import * as fs from 'fs';
-import * as fetch from 'node-fetch';
-
-
+import { Browser } from 'puppeteer';
+import CollectAnimations from '../../src/collect/animations.collect';
 import CollectAssets from '../../src/collect/assets.collect';
-import { DEFAULT } from '../../src/settings/settings';
+import CollectCookies from '../../src/collect/cookies.collect';
 import CollectFailedTransfers from '../../src/collect/failed-transfer.collect';
+import CollectLazyMedia from '../../src/collect/lazymedia.collect';
+import CollectMedia from '../../src/collect/media.collect';
+import CollectMetaTags from '../../src/collect/meta-tag.collect';
+import CollectRedirect from '../../src/collect/redirect.collect';
+import CollectRobots from '../../src/collect/robots.collect';
+import CollectScreenshot from '../../src/collect/screenshot.collect';
+import CollectSubfont from '../../src/collect/subfont.collect';
+import CollectTransfer from '../../src/collect/transfer.collect';
+import { DEFAULT } from '../../src/settings/settings';
+import { PageContext } from '../../src/types';
 import { PrivateSettings } from '../../src/types/settings';
 import {
-	CollectMediaTraces,
-	CollectTransferTraces,
-	CollectSubfontsTraces,
-	CollectCookiesTraces,
-	CollectLazyMediaTraces,
-	CollectAnimationsTraces,
-	CollectRobotsTraces,
-	CollectMetaTagsTraces,
-	CollectScreenShotTraces
+	CollectAnimationsTraces, CollectCookiesTraces,
+	CollectLazyMediaTraces, CollectMediaTraces, CollectMetaTagsTraces, CollectRobotsTraces, CollectScreenShotTraces, CollectSubfontsTraces, CollectTransferTraces
 } from '../../src/types/traces';
-import CollectRedirect from '../../src/collect/redirect.collect';
-import CollectMedia from '../../src/collect/media.collect';
-import CollectLazyMedia from '../../src/collect/lazymedia.collect';
-import CollectTransfer from '../../src/collect/transfer.collect';
-import CollectSubfont from '../../src/collect/subfont.collect';
-import CollectAnimations from '../../src/collect/animations.collect';
-import CollectCookies from '../../src/collect/cookies.collect';
-import CollectRobots from '../../src/collect/robots.collect';
-import CollectMetaTags from '../../src/collect/meta-tag.collect';
-import CollectScreenshot from '../../src/collect/screenshot.collect';
+import * as util from '../../src/utils/utils';
+
+
 
 const server: FastifyInstance<
 	Server,
@@ -216,7 +209,7 @@ describe('Redirect collector', () => {
 					green: true,
 					hostedby: 'you-know'
 				})
-			} as fetch.Response);
+			} as any );
 		const path = 'redirect-host'
 		const assets = await navigateAndReturnAssets(path, CollectRedirect.collect);
 		expect(Object.keys(assets?.server.energySource as {})).toEqual(['isGreen', 'hostedby'])
@@ -238,7 +231,7 @@ describe('Redirect collector', () => {
 				json: async () => ({
 					error: 'Server internal error'
 				})
-			} as fetch.Response);
+			} as any);
 		const path = 'redirect-host'
 		const assets = await navigateAndReturnAssets(path, CollectRedirect.collect);
 		expect(assets?.server.energySource).toBeUndefined()
@@ -385,7 +378,10 @@ describe('Cookies collector', () => {
 			path: '/',
 			secure: false,
 			session: true,
-			size: 7
+			size: 7,
+			sameParty: false,
+			sourcePort: 3333,
+			sourceScheme: "NonSecure"
 		}])
 	})
 

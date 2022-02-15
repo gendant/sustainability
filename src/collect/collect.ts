@@ -1,23 +1,9 @@
-import {PageContext} from '../types';
+import { PageContext } from '../types';
+import { CollectMeta, CollectorsIds, PassContext } from '../types/audit';
+import { PrivateSettings } from '../types/settings';
 import {
-	CollectHtmlTraces,
-	CollectAssetsTraces,
-	CollectMediaTraces,
-	CollectConsoleTraces,
-	CollectRedirectTraces,
-	CollectSubfontsTraces,
-	CollectTransferTraces,
-	CollectPerformanceTraces,
-	CollectFailedTransferTraces,
-	CollectLazyMediaTraces,
-	CollectMetaTagsTraces,
-	CollectScreenShotTraces,
-	CollectCookiesTraces,
-	CollectAnimationsTraces,
-	CollectRobotsTraces
+	CollectType
 } from '../types/traces';
-import {CollectMeta, CollectorsIds, PassContext} from '../types/audit';
-import {PrivateSettings} from '../types/settings';
 
 export default class Collect {
 	public static collectId: CollectorsIds;
@@ -29,24 +15,6 @@ export default class Collect {
 	}
 
 	static async collect(pageContext: PageContext, settings: PrivateSettings) {
-		return {} as Promise<
-			| CollectHtmlTraces
-			| CollectAssetsTraces
-			| CollectMediaTraces
-			| CollectConsoleTraces
-			| CollectRedirectTraces
-			| CollectSubfontsTraces
-			| CollectTransferTraces
-			| CollectPerformanceTraces
-			| CollectFailedTransferTraces
-			| CollectLazyMediaTraces
-			| CollectMediaTraces
-			| CollectMetaTagsTraces
-			| CollectScreenShotTraces
-			| CollectCookiesTraces
-			| CollectAnimationsTraces
-			| CollectRobotsTraces
-			| undefined
-		>;
+		return {} as Promise<CollectType>
 	}
 }

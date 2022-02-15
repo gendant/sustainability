@@ -1,7 +1,7 @@
-import Audit from './audit';
-import * as util from '../utils/utils';
 import { Meta, Result } from '../types/audit';
 import { Traces } from '../types/traces';
+import * as util from '../utils/utils';
+import Audit from './audit';
 
 export default class NoConsoleLogsAudit extends Audit {
 	static get meta() {
@@ -15,7 +15,7 @@ export default class NoConsoleLogsAudit extends Audit {
 		} as Meta;
 	}
 
-	static audit(traces: Traces): Result {
+	static async audit(traces: Traces): Promise<Result> {
 		const debug = util.debugGenerator('NoConsoleLogs Audit');
 		debug('running');
 		const dups = new Set();

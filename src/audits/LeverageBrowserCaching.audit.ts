@@ -1,8 +1,8 @@
+import { DEFAULT } from '../settings/settings';
 import { Meta, Result } from '../types/audit';
 import { Traces } from '../types/traces';
-import Audit from './audit';
 import * as util from '../utils/utils';
-import { DEFAULT } from '../settings/settings';
+import Audit from './audit';
 const parseCacheControl = require('parse-cache-control');
 
 // Ignore assets that have very high likelihood of cache hit
@@ -25,14 +25,14 @@ export default class LeverageBrowserCachingAudit extends Audit {
 		} as Meta;
 	}
 
-	// @ts-ignore
-	static audit(traces: Traces): Result {
+	
+	static async audit(traces: Traces): Promise<Result> {
 		const debug = util.debugGenerator('LeverageBrowserCaching Audit');
 		debug('running');
 		const results: any = [];
 		let totalWastedBytes = 0;
 		const { hosts } = traces.server;
-		// @ts-ignore
+		
 		traces.record.filter(r => {
 			const recordUrl = r.request.url;
 			const resourceType = r.request.resourceType;
@@ -72,6 +72,8 @@ export default class LeverageBrowserCachingAudit extends Audit {
 				totalBytes,
 				wastedBytes
 			});
+
+			return
 		});
 
 		const score = util.computeLogNormalScore(

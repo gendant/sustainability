@@ -1,18 +1,12 @@
-import Collect from './collect';
-import {PageContext} from '../types';
-import * as util from '../utils/utils';
-import {Request} from 'puppeteer';
+import { HTTPRequest as Request } from 'puppeteer';
+import { PageContext } from '../types';
+import { CollectMeta } from '../types/audit';
+import { PrivateSettings } from '../types/settings';
 import {
-	Stylesheets,
-	InlineStyles,
-	InlineScripts,
-	Scripts,
-	Scriptfiles,
-	Sheets,
-	CollectAssetsTraces
+	CollectAssetsTraces, InlineScripts, InlineStyles, Scriptfiles, Scripts, Sheets, Stylesheets
 } from '../types/traces';
-import {CollectMeta} from '../types/audit';
-import {PrivateSettings} from '../types/settings';
+import * as util from '../utils/utils';
+import Collect from './collect';
 
 export default class CollectAssets extends Collect {
 	static get meta() {
@@ -156,7 +150,7 @@ export default class CollectAssets extends Collect {
 				}
 			};
 		} catch (error) {
-			util.log(`Error: Assets collect return message: ${error.message}`);
+			util.log(`Error: Assets collect return message: ${error}`);
 			return undefined;
 		}
 	}

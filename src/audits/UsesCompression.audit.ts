@@ -1,7 +1,7 @@
-import Audit from './audit';
-import * as util from '../utils/utils';
-import { Traces } from '../types/traces';
 import { Meta, Result } from '../types/audit';
+import { Traces } from '../types/traces';
+import * as util from '../utils/utils';
+import Audit from './audit';
 /**
  * @fileoverview Audits if compression is used. Instead of looking for the content encoding
  *  Response header, which may not reflect the origin server configuration if it serves
@@ -49,7 +49,7 @@ export default class UsesCompressionAudit extends Audit {
 		} as Meta;
 	}
 
-	static audit(traces: Traces): Result {
+	static async audit(traces: Traces): Promise<Result> {
 		const debug = util.debugGenerator('UsesCompression Audit');
 		debug('running');
 		const auditUrls = new Set();

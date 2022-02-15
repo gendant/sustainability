@@ -1,7 +1,7 @@
 import { Meta, Result } from '../types/audit';
 import { Traces } from '../types/traces';
-import Audit from './audit';
 import * as util from '../utils/utils';
+import Audit from './audit';
 
 const MAX_SINGLE_INLINE_ASSET_SIZE = 2048;
 export default class AvoidInlineAssetsAudit extends Audit {
@@ -16,7 +16,7 @@ export default class AvoidInlineAssetsAudit extends Audit {
 		} as Meta;
 	}
 
-	static audit(traces: Traces): Result {
+	static async audit(traces: Traces): Promise<Result> {
 		const debug = util.debugGenerator('AvoidInlineAssets Audit');
 		debug('running');
 		const bigInlineAssets = [

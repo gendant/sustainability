@@ -1,9 +1,9 @@
-import Collect from './collect';
-import {PageContext} from '../types';
+import { PageContext } from '../types';
+import { CollectMeta } from '../types/audit';
+import { PrivateSettings } from '../types/settings';
+import { CollectSubfontsTraces, GHOutput, SubfontFormat } from '../types/traces';
 import * as util from '../utils/utils';
-import {CollectSubfontsTraces, SubfontFormat, GHOutput} from '../types/traces';
-import {PrivateSettings} from '../types/settings';
-import {CollectMeta} from '../types/audit';
+import Collect from './collect';
 
 export default class CollectSubfont extends Collect {
 	static get meta() {
@@ -30,7 +30,8 @@ export default class CollectSubfont extends Collect {
 				debug
 			);
 			const result: SubfontFormat[] = await page.evaluate(() => {
-				// @ts-ignore
+				
+				//@ts-ignore global
 				const hanger = new GlyphHanger();
 				hanger.init(document.body);
 				const resultJson: GHOutput = hanger.toJSON();
@@ -53,7 +54,7 @@ export default class CollectSubfont extends Collect {
 			};
 		} catch (error) {
 			util.log(
-				`Error: Subfont collector failed with message: ${error.message}`
+				`Error: Subfont collector failed with message: ${error}`
 			);
 			return undefined;
 		}

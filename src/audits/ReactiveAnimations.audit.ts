@@ -1,7 +1,7 @@
 import { Meta, Result, SkipResult } from '../types/audit';
 import { Traces } from '../types/traces';
-import Audit from './audit';
 import * as utils from '../utils/utils';
+import Audit from './audit';
 
 export default class ReactiveAnimationsAudit extends Audit {
 	static get meta() {
@@ -15,7 +15,7 @@ export default class ReactiveAnimationsAudit extends Audit {
 		} as Meta;
 	}
 
-	static audit(traces: Traces): Result | SkipResult {
+	static async audit(traces: Traces): Promise<Result | SkipResult> {
 		const debug = utils.debugGenerator('SmartAnimations Audit');
 		debug('running');
 

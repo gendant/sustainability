@@ -1,4 +1,4 @@
-import { Cookie } from 'puppeteer';
+import { BrowserConnectOptions, BrowserLaunchArgumentOptions, LaunchOptions, Product } from "puppeteer";
 
 export interface Format {
 	uid: string;
@@ -33,6 +33,39 @@ export interface Traces {
 	animations: AnimationsFormat;
 	cookies: Cookie[];
 	metatag: MetaTagFormat[];
+}
+
+//ported from old @types/puppeteer 5.5.0
+
+export interface Cookie {
+    /** The cookie name. */
+    name: string;
+    /** The cookie value. */
+    value: string;
+    /** The cookie domain. */
+    domain: string;
+    /** The cookie path. */
+    path: string;
+    /** The cookie Unix expiration time in seconds. */
+    expires: number;
+    /** The cookie size */
+    size: number;
+    /** The cookie http only flag. */
+    httpOnly: boolean;
+    /** The session cookie flag. */
+    session: boolean;
+    /** The cookie secure flag. */
+    secure: boolean;
+    /** The cookie same site definition. */
+    sameSite?: SameSiteSetting | undefined;
+}
+
+export type SameSiteSetting = 'Strict' | 'Lax' | 'None';
+export type LoadEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
+
+export type PuppeteerLaunchOptions = LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions & {
+	product?: Product;
+	extraPrefsFirefox?: globalThis.Record<string, unknown>;
 }
 
 export interface AnimationsFormat {
@@ -116,31 +149,31 @@ export interface MetaTagFormat {
 
 export interface Metrics {
 	/** The timestamp when the metrics sample was taken. */
-	Timestamp: number;
+	Timestamp?: number;
 	/** Number of documents in the page. */
-	Documents: number;
+	Documents?: number;
 	/** Number of frames in the page. */
-	Frames: number;
+	Frames?: number;
 	/** Number of events in the page. */
-	JSEventListeners: number;
+	JSEventListeners?: number;
 	/** Number of DOM nodes in the page. */
-	Nodes: number;
+	Nodes?: number;
 	/** Total number of full or partial page layout. */
-	LayoutCount: number;
+	LayoutCount?: number;
 	/** Total number of page style recalculations. */
-	RecalcStyleCount: number;
+	RecalcStyleCount?: number;
 	/** Combined durations of all page layouts. */
-	LayoutDuration: number;
+	LayoutDuration?: number;
 	/** Combined duration of all page style recalculations. */
-	RecalcStyleDuration: number;
+	RecalcStyleDuration?: number;
 	/** Combined duration of JavaScript execution. */
-	ScriptDuration: number;
+	ScriptDuration?: number;
 	/** Combined duration of all tasks performed by the browser. */
-	TaskDuration: number;
+	TaskDuration?: number;
 	/** Used JavaScript heap size. */
-	JSHeapUsedSize: number;
+	JSHeapUsedSize?: number;
 	/** Total JavaScript heap size. */
-	JSHeapTotalSize: number;
+	JSHeapTotalSize?: number;
 }
 
 export interface CssTrace {
@@ -230,22 +263,10 @@ export type HttpMethod =
 	| 'PATCH'
 	| 'PUT'
 	| 'DELETE'
-	| 'OPTIONS';
+	| 'OPTIONS'
+	| string
 
-export type ResourceType =
-	| 'document'
-	| 'stylesheet'
-	| 'image'
-	| 'media'
-	| 'font'
-	| 'script'
-	| 'texttrack'
-	| 'xhr'
-	| 'fetch'
-	| 'eventsource'
-	| 'websocket'
-	| 'manifest'
-	| 'other';
+export type ResourceType = "document" | "stylesheet" | "image" | "media" | "font" | "script" | "texttrack" | "xhr" | "fetch" | "eventsource" | "websocket" | "manifest" | "signedexchange" | "other" | "ping" | "cspviolationreport" | "preflight"
 
 export type Headers = globalThis.Record<string, string>
 
@@ -371,3 +392,20 @@ export interface CollectMetaTagsTraces {
 	metatag: MetaTagFormat[];
 }
 
+export type CollectType = CollectHtmlTraces
+| CollectAssetsTraces
+| CollectMediaTraces
+| CollectConsoleTraces
+| CollectRedirectTraces
+| CollectSubfontsTraces
+| CollectTransferTraces
+| CollectPerformanceTraces
+| CollectFailedTransferTraces
+| CollectLazyMediaTraces
+| CollectMediaTraces
+| CollectMetaTagsTraces
+| CollectScreenShotTraces
+| CollectCookiesTraces
+| CollectAnimationsTraces
+| CollectRobotsTraces
+| undefined

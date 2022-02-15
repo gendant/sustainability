@@ -1,10 +1,10 @@
-import Collect from './collect';
-import { PrivateSettings } from '../types/settings';
-import * as util from '../utils/utils';
-import { CollectMeta } from '../types/audit';
+import { HTTPRequest as Request } from 'puppeteer';
 import { PageContext } from '../types';
+import { CollectMeta } from '../types/audit';
+import { PrivateSettings } from '../types/settings';
 import { CollectLazyMediaTraces } from '../types/traces';
-import { Request } from 'puppeteer';
+import * as util from '../utils/utils';
+import Collect from './collect';
 
 export default class CollectLazyMedia extends Collect {
 	static get meta() {
@@ -28,7 +28,9 @@ export default class CollectLazyMedia extends Collect {
 				settings.maxNavigationTime,
 				debug
 			);
-			if (!(await util.isPageAbleToScroll(page))) {
+
+			const isPageScrollable = await util.isPageAbleToScroll(page)
+			if (!isPageScrollable) {
 				throw new Error('Page is unable to scroll');
 			}
 
@@ -46,8 +48,8 @@ export default class CollectLazyMedia extends Collect {
 				});
 			})()
 
-			await util.scrollFunction(page, settings.maxScrollInterval, debug),
-				page.removeAllListeners('requestfinished');
+			await util.scrollFunction(page, settings.maxScrollInterval, debug)
+			
 			debug('done');
 
 			return {
@@ -58,8 +60,11 @@ export default class CollectLazyMedia extends Collect {
 			};
 		} catch (error) {
 			util.log(`Error: Lazy Media collect failed with message: ${error}`);
-			page.emit('scrollFinished');
 			return undefined;
+		}
+		finally{
+			page.removeAllListeners('requestfinished')
+			page.emit('scrollFinished')
 		}
 	}
 }

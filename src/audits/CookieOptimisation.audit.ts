@@ -1,7 +1,7 @@
 import { Meta, Result, SkipResult } from '../types/audit';
 import { Traces } from '../types/traces';
-import Audit from './audit';
 import * as util from '../utils/utils';
+import Audit from './audit';
 
 const MAX_COOKIE_SIZE_IN_BYTES = 1024;
 
@@ -17,7 +17,7 @@ export default class CookieOptimisation extends Audit {
 		} as Meta;
 	}
 
-	static audit(traces: Traces): Result | SkipResult {
+	static async audit(traces: Traces): Promise<Result | SkipResult> {
 		const debug = util.debugGenerator('CookieOptimisation Audit');
 		debug('running');
 

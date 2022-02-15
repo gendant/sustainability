@@ -1,7 +1,7 @@
 import { Meta, Result } from '../types/audit';
 import { Traces } from '../types/traces';
-import Audit from './audit';
 import * as util from '../utils/utils';
+import Audit from './audit';
 
 export default class AvoidURLRedirectsAudit extends Audit {
 	static get meta() {
@@ -15,7 +15,7 @@ export default class AvoidURLRedirectsAudit extends Audit {
 		} as Meta;
 	}
 
-	static audit(traces: Traces): Result {
+	static async audit(traces: Traces): Promise<Result> {
 		const debug = util.debugGenerator('AvoidURLRedirects Audit');
 		const { hosts } = traces.server;
 		debug('running');

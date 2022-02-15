@@ -1,7 +1,7 @@
-import Audit from './audit';
-import * as util from '../utils/utils';
-import { Meta, SkipResult, Result } from '../types/audit';
+import { Meta, Result, SkipResult } from '../types/audit';
 import { Traces } from '../types/traces';
+import * as util from '../utils/utils';
+import Audit from './audit';
 
 export default class UsesWebpImageFormatAudit extends Audit {
 	static get meta() {
@@ -24,7 +24,7 @@ export default class UsesWebpImageFormatAudit extends Audit {
 	 * WebP should be used against PNG, JPG or GIF images and ofc base64 data images
 	 */
 
-	static audit(traces: Traces): Result | SkipResult {
+	static async audit(traces: Traces): Promise<Result | SkipResult> {
 		const debug = util.debugGenerator('UsesWebPImageFormat Audit');
 
 		const mediaImages = [...(traces.lazyMedia ? [traces.lazyMedia.lazyImages] : []).flat(),

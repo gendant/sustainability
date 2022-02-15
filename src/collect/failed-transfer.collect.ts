@@ -1,9 +1,9 @@
-import Collect from './collect';
-import {PageContext} from '../types';
+import { HTTPResponse as Response } from 'puppeteer';
+import { PageContext } from '../types';
+import { CollectMeta } from '../types/audit';
+import { CollectFailedTransferTraces, FailedRequest } from '../types/traces';
 import * as util from '../utils/utils';
-import {Response} from 'puppeteer';
-import {CollectMeta} from '../types/audit';
-import {CollectFailedTransferTraces, FailedRequest} from '../types/traces';
+import Collect from './collect';
 
 const debug = util.debugGenerator('Failed transfer collect');
 
@@ -33,7 +33,7 @@ export default class CollectFailedTransfers extends Collect {
 						code: status,
 						statusText: response.statusText(),
 						failureText: response.request().failure()?.errorText,
-						// @ts-ignore
+						
 						requestId: response.request()._requestId
 					};
 
@@ -47,7 +47,7 @@ export default class CollectFailedTransfers extends Collect {
 			};
 		} catch (error) {
 			util.log(
-				`Error: At failed transfer collect with message: ${error.message}`
+				`Error: At failed transfer collect with message: ${error}`
 			);
 			return undefined;
 		}

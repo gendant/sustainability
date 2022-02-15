@@ -1,10 +1,10 @@
-import Collect from './collect';
+import { HTTPResponse } from 'puppeteer';
 import { PageContext } from '../types';
-import * as util from '../utils/utils';
-import { Response } from 'puppeteer';
 import { CollectMeta } from '../types/audit';
-import { CollectRedirectTraces, RedirectResponse } from '../types/traces';
 import { PrivateSettings } from '../types/settings';
+import { CollectRedirectTraces, RedirectResponse } from '../types/traces';
+import * as util from '../utils/utils';
+import Collect from './collect';
 
 export default class CollectRedirect extends Collect {
 	static get meta() {
@@ -24,7 +24,7 @@ export default class CollectRedirect extends Collect {
 		const results: RedirectResponse[] = [];
 		const { page, url } = pageContext;
 		const initialHost = new URL(url).hostname;
-		page.on('response', (response: Response) => {
+		page.on('response', (response: HTTPResponse) => {
 			const status = response.status();
 			const url = response.url();
 			if (status >= 300 && status !== 304 && status <= 399) {
@@ -33,7 +33,7 @@ export default class CollectRedirect extends Collect {
 					url
 				).toString();
 				const information = {
-					// @ts-ignore
+					//@ts-ignore 
 					requestId: response.request()._requestId,
 					url,
 					redirectsTo
@@ -94,7 +94,7 @@ export default class CollectRedirect extends Collect {
 				redirect: results
 			};
 		} catch (error) {
-			util.log(`Error: Redirect collect failed with message: ${error.message}`);
+			util.log(`Error: Redirect collect failed with message: ${error}`);
 			return undefined;
 		}
 	}

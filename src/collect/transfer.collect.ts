@@ -1,16 +1,13 @@
-import Collect from './collect';
-import {PageContext} from '../types';
-import * as util from '../utils/utils';
-import {Request} from 'puppeteer';
+import { HTTPRequest as Request } from 'puppeteer';
+import { PageContext } from '../types';
+import { CollectMeta } from '../types/audit';
+import { PrivateSettings } from '../types/settings';
 import {
-	CollectTransferTraces,
-	ProtocolData,
-	CDPDataPrivate,
-	Record,
-	ByteFormat
+	ByteFormat, CDPDataPrivate, CollectTransferTraces,
+	ProtocolData, Record
 } from '../types/traces';
-import {CollectMeta} from '../types/audit';
-import {PrivateSettings} from '../types/settings';
+import * as util from '../utils/utils';
+import Collect from './collect';
 
 const APPLICABLE_COMPRESSION_MIME_TYPES = [
 	'text/css',
@@ -168,12 +165,13 @@ export default class CollectTransfer extends Collect {
 						debug('failed at redirect response');
 						util.log(
 							`Error: Transfer collect failed at ${request.url()} with message: ${
-								error.message
+								error
 							}`
 						);
 					}
 
-					// @ts-ignore
+					
+					//@ts-ignore
 					const requestId = request._requestId;
 					const information: Record = {
 						request: {
@@ -220,7 +218,7 @@ export default class CollectTransfer extends Collect {
 				record: results
 			};
 		} catch (error) {
-			util.log(`Error: Transfer collect failed with message: ${error.message}`);
+			util.log(`Error: Transfer collect failed with message: ${error}`);
 			return undefined;
 		}
 	}

@@ -1,7 +1,7 @@
-import Audit from './audit';
-import * as util from '../utils/utils';
-import { Meta, SkipResult, Result } from '../types/audit';
+import { Meta, Result } from '../types/audit';
 import { Traces } from '../types/traces';
+import * as util from '../utils/utils';
+import Audit from './audit';
 
 /**
  * @fileoverview Audit request in the same origin as host use HTTP2.0
@@ -20,7 +20,7 @@ export default class UsesHTTP2Audit extends Audit {
 		} as Meta;
 	}
 
-	static audit(traces: Traces): Result {
+	static async audit(traces: Traces): Promise<Result> {
 		const debug = util.debugGenerator('UsesHTTP2 Audit');
 		debug('running');
 		const { hosts } = traces.server;

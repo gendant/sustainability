@@ -1,9 +1,9 @@
-import {PageContext} from '../types';
-import {CollectMeta} from '../types/audit';
-import Collect from './collect';
+import { PageContext } from '../types';
+import { CollectMeta } from '../types/audit';
+import { PrivateSettings } from '../types/settings';
+import { CollectScreenShotTraces, RGBPowerFormat } from '../types/traces';
 import * as util from '../utils/utils';
-import {CollectScreenShotTraces, RGBPowerFormat} from '../types/traces';
-import {PrivateSettings} from '../types/settings';
+import Collect from './collect';
 
 const BLUE_CHANNEL_POWER = 6;
 const RED_CHANNEL_POWER = 2.5;
@@ -38,7 +38,7 @@ export default class CollectScreenshot extends Collect {
 				'domcontentloaded',
 				settings.maxNavigationTime
 			);
-			const base64Screenshot = await page.screenshot({encoding: 'base64'});
+			const base64Screenshot = await page.screenshot({encoding: 'base64'}) as string;
 			const darkModePage = await page.browser().newPage();
 
 			await Promise.all([
@@ -65,7 +65,7 @@ export default class CollectScreenshot extends Collect {
 			]);
 			const base64ScreenshotDark = await darkModePage.screenshot({
 				encoding: 'base64'
-			});
+			}) as string;
 
 			await Promise.all([page.bringToFront(), darkModePage.close()]);
 

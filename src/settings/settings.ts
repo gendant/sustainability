@@ -1,37 +1,36 @@
-import CollectTransfer from '../collect/transfer.collect';
-import CollectRedirect from '../collect/redirect.collect';
-import CollectConsole from '../collect/console.collect';
-import CollectSubfont from '../collect/subfont.collect';
-import CollectAssets from '../collect/assets.collect';
-import UsesCompressionAudit from '../audits/UsesCompression.audit';
-import CarbonFootprintAudit from '../audits/CarbonFootprint.audit';
-import UsesHTTP2Audit from '../audits/UsesHTTP2.audit';
-import UsesGreenServerAudit from '../audits/UsesGreenServer.audit';
-import UsesWebpImageFormatAudit from '../audits/UsesWebpImageFormat.audit';
-import NoConsoleLogsAudit from '../audits/NoConsoleLogs.audit';
-import UsesFontSubsettingAudit from '../audits/UsesFontSubsetting.audit';
-import UsesLazyLoadingAudit from '../audits/UsesLazyLoading.audit';
-import { DefaultSettings } from '../types/settings';
-import CollectScreenshot from '../collect/screenshot.collect';
-import PixelEnergyEfficiencyAudit from '../audits/PixelEnergyEfficiency.audit';
-import UsesDarkModeAudit from '../audits/UsesDarkMode.audit';
-import CollectCookies from '../collect/cookies.collect';
-import CookieOptimisation from '../audits/CookieOptimisation.audit';
+import AvoidableBotTrafficAudit from '../audits/AvoidableBotTraffic.audit';
 import AvoidInlineAssetsAudit from '../audits/AvoidInlineAssets.audit';
+import AvoidURLRedirectsAudit from '../audits/AvoidURLRedirects.audits';
+import CarbonFootprintAudit from '../audits/CarbonFootprint.audit';
+import CookieOptimisation from '../audits/CookieOptimisation.audit';
+import LeverageBrowserCachingAudit from '../audits/LeverageBrowserCaching.audit';
+import NoConsoleLogsAudit from '../audits/NoConsoleLogs.audit';
+import PixelEnergyEfficiencyAudit from '../audits/PixelEnergyEfficiency.audit';
+import ReactiveAnimationsAudit from '../audits/ReactiveAnimations.audit';
+import UsesCompressionAudit from '../audits/UsesCompression.audit';
+import UsesDarkModeAudit from '../audits/UsesDarkMode.audit';
+import UsesFontSubsettingAudit from '../audits/UsesFontSubsetting.audit';
+import UsesGreenServerAudit from '../audits/UsesGreenServer.audit';
+import UsesHTTP2Audit from '../audits/UsesHTTP2.audit';
+import UsesLazyLoadingAudit from '../audits/UsesLazyLoading.audit';
+import UsesWebmVideoFormatAudit from '../audits/UsesWebmVideoFormat.audit';
+import UsesWebpImageFormatAudit from '../audits/UsesWebpImageFormat.audit';
+import CollectAnimations from '../collect/animations.collect';
+import CollectAssets from '../collect/assets.collect';
+import CollectConsole from '../collect/console.collect';
+import CollectCookies from '../collect/cookies.collect';
 import CollectLazyMedia from '../collect/lazymedia.collect';
 import CollectMedia from '../collect/media.collect';
-import LeverageBrowserCachingAudit from '../audits/LeverageBrowserCaching.audit';
-import UsesWebmVideoFormatAudit from '../audits/UsesWebmVideoFormat.audit';
-import AvoidURLRedirectsAudit from '../audits/AvoidURLRedirects.audits';
-import CollectRobots from '../collect/robots.collect';
 import CollectMetaTags from '../collect/meta-tag.collect';
-import AvoidableBotTrafficAudit from '../audits/AvoidableBotTraffic.audit';
-import CollectAnimations from '../collect/animations.collect';
-import ReactiveAnimationsAudit from '../audits/ReactiveAnimations.audit';
+import CollectRedirect from '../collect/redirect.collect';
+import CollectRobots from '../collect/robots.collect';
+import CollectScreenshot from '../collect/screenshot.collect';
+import CollectSubfont from '../collect/subfont.collect';
+import CollectTransfer from '../collect/transfer.collect';
+import { DefaultSettings } from '../types/settings';
 
 export const DEFAULT: DefaultSettings = {
 	LAUNCH_SETTINGS: {
-		headless: true,
 		timeout: 0
 	},
 	CONNECTION_SETTINGS: {
@@ -55,7 +54,6 @@ export const DEFAULT: DefaultSettings = {
 			accuracy: 100
 		},
 		streams: false,
-		telemetry: true,
 		coldRun: true
 	},
 	CATEGORIES: {

@@ -1,12 +1,12 @@
-import Connection from '../connection/connection';
+import { Browser, LaunchOptions, Page } from 'puppeteer';
 import Commander from '../commander/commander';
+import Connection from '../connection/connection';
 import { DEFAULT } from '../settings/settings';
-import { PageContext, AuditSettings } from '../types';
-import { LaunchOptions, Browser, Page, LoadEvent } from 'puppeteer';
-
-import * as util from '../utils/utils';
+import { AuditSettings, PageContext } from '../types';
 import { Report } from '../types/audit';
+import * as util from '../utils/utils';
 import { auditStream } from './stream';
+
 
 const debug = util.debugGenerator('Sustainability');
 export default class Sustainability {
@@ -25,6 +25,7 @@ export default class Sustainability {
 		let browser: Browser | undefined;
 		let page: Page;
 		const comments: string[] = [];
+		
 		try {
 			browser =
 				settings?.browser ??
@@ -43,10 +44,10 @@ export default class Sustainability {
 					`Warning: The tested URL (${url}) was redirected to (${redirectURL}). Please, next time test the second URL directly.`
 				);
 				url = redirectURL;
+				
 			}
 
 			page = await browser.newPage();
-			const isTelemetryEnabled = settings?.connectionSettings?.telemetry ?? DEFAULT.CONNECTION_SETTINGS.telemetry
 			let report = {} as Report
 			try {
 				const pageContext = { page, url };
@@ -54,16 +55,15 @@ export default class Sustainability {
 				if (comments.length) report.comments = comments;
 				return report;
 			} catch (error) {
-				throw new Error(`Error: Test failed with message: ${error.message}`);
+				throw new Error(`Error: Test failed with message: ${error}`);
 			} finally {
 				await page.close();
-				if (isTelemetryEnabled && Object.keys(report).length)
-					await util.sendTelemetry(report)
 			}
 		} catch (error) {
-			throw new Error(`Error: ${error.message}`);
+			throw new Error(`Error: ${error}`);
 		} finally {
-			if (browser) {
+			if (browser && !settings?.browser) {
+				debug('Closing browser...')
 				await browser.close();
 			}
 		}
@@ -100,7 +100,7 @@ export default class Sustainability {
 		const coldPageContext = { page: coldRunPage, url };
 		await Promise.race([
 			redirectURLPromise.then(v => (redirectURL = v)),
-			util.navigate(coldPageContext, 'networkidle0', debug, true)
+			util.navigate(coldPageContext, 'networkidle0', debug)
 		]);
 
 		return redirectURL
@@ -114,8 +114,7 @@ export default class Sustainability {
 		const { url } = pageContextRaw;
 		const page = await Commander.setUp(pageContextRaw, settings);
 		const pageContext = { ...pageContextRaw, page };
-		// @ts-ignore allSettled lacks typescript support
-		const results = await Promise.allSettled([
+		const [_,auditResults] = await Promise.allSettled([
 			util.navigate(
 				pageContext,
 				'networkidle0',
@@ -132,7 +131,7 @@ export default class Sustainability {
 			Sustainability.auditStream.push(null);
 		}
 
-		const resultsParsed = util.parseAllSettled(results, true);
+		const resultsParsed = util.parseAllSettledAudits(auditResults);
 		const audits = util.groupAudits(resultsParsed);
 		const globalScore = util.computeScore(audits);
 

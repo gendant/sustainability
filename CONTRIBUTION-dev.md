@@ -7,21 +7,21 @@
 
 ## Understanding the architecture
 
-![DAS architecture](https://github.com/digital-audits/sustainability/blob/master/architecture.png)
+![DAS architecture](https://github.com/auditsdigital/sustainability/blob/master/archv2.png)
 
-I- Each job has its own commander instance which controls the collectors, parsers and
+- Each job has its own commander instance which controls the collectors, parsers and
 evaluators.
 Initially, the worker handovers a job to the commander instance. 
 
-II- This creates two parallel threads, one for navigation and another for collecting the traces. The navigation consists of launching a headless chromium browser controlled by Puppeteer. 
+- This creates two parallel threads, one for navigation and another for collecting the traces. The navigation consists of launching a headless chromium browser controlled by Puppeteer. 
 
-III- Collectors are scripts whose aim is to collect valuable metrics from the navigation and transform them to traces that contain the processed information.
+- Collectors are scripts whose aim is to collect valuable metrics from the navigation and transform them to traces that contain the processed information.
 Collectors run in parallel threads and asynchronously because some of them have to wait for navigational
 events to dispatch. Transfer, css, js or images are examples of existing collectors.
 Then, a parser role is to catch errors and transform collected pieces of information to a format consumable to
 audits (i.e. traces)
 
-IV- Audits are splitted into two categories and also running in parallel and have their own
+- Audits are splitted into two categories and also running in parallel and have their own
 format. They include a meta function containing the audit’s id, description, failure and success titles,
 thresholds, etc., and a method to evaluate traces regarding the established thresholds and eventually, a
 score is calculated which may be in a binary or numeric format. Optionally and depending on the audit
@@ -85,7 +85,7 @@ AUDITS: {
 
 #### Working with the app's utils
 
-Those are the [utils](https://github.com/digital-audits/sustainability/blob/master/src/utils/utils.ts) you can take advantage of while working on your own collector implementation. 
+Those are the [utils](https://github.com/auditsdigital/sustainability/blob/master/src/utils/utils.ts) you can take advantage of while working on your own collector implementation. 
 Basically, you may use the `safeNavigationTimeout` which is an implementation of the `page.waitForNavigation()` Puppeteer's method but with a customable timeout that does not crashes the app.
 Also you may use the `debugGenerator` to create a new debug object.
 
@@ -225,7 +225,7 @@ Make sure to fetch the latest release from Master branch.
 
 **1- Git clone**
 
-`git clone https://github.com/digital-audits/sustainability`
+`git clone https://github.com/auditsdigital/sustainability`
 
 **2- cd to folder**
 

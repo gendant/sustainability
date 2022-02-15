@@ -1,8 +1,7 @@
 import { Meta, Result, SkipResult } from '../types/audit';
 import { Traces } from '../types/traces';
-import Audit from './audit';
 import * as util from '../utils/utils';
-import { trace } from 'console';
+import Audit from './audit';
 
 export default class AvoidableBotTrafficAudit extends Audit {
 	static get meta() {
@@ -12,14 +11,14 @@ export default class AvoidableBotTrafficAudit extends Audit {
 			failureTitle: `Bot traffic is not handled`,
 			description: `About 40% of current internet traffic and bandwidth is due to bots or web crawlers. Proper handling of robot.txt and <meta name="robots"> allow to control which content should be allowed for bots visiting your site and thus save precious resources. More <a rel="noopener noreferrer" target="_blank" href="https://support.google.com/webmasters/answer/6062596?hl=en">info</a>`,
 			category: 'design',
-			collectors: ['robotscollect', 'metatagscollect', 'transfercollect']
+			collectors: ['robotscollect', 'metatagscollect', 'transfercollect', 'redirectcollect']
 		} as Meta;
 	}
 
-	static audit(traces: Traces): Result | SkipResult {
+	static async audit(traces: Traces): Promise<Result | SkipResult>{
 		const debug = util.debugGenerator('AvoidableBotTraffic Audit');
 		debug('running');
-		if (!traces.robots) {
+		if (!(traces.robots && Object.keys(traces.robots).length)) {
 			return {
 				meta: util.skipMeta(AvoidableBotTrafficAudit.meta),
 				scoreDisplayMode: 'skip',
@@ -32,9 +31,18 @@ export default class AvoidableBotTrafficAudit extends Audit {
 				attr => attr.hasOwnProperty('name') && attr.name === 'robots'
 			);
 		});
-		const xRobotTag = traces.record.filter(r =>
-			r.response.headers['x-robots-tag']
+
+		const { hosts } = traces.server;
+		debug('checking')
+		const xRobotTag = traces.record.filter(r =>{
+			if (!r.response.headers['x-robots-tag']) return false	
+			const recordUrl = r.request.url;
+			if (!hosts.includes(recordUrl.hostname)) return false;
+			return true
+			}
 		);
+
+		debug(JSON.stringify(robotMetaTag))
 		const disallowRulesForAllUserAgents =
 			traces.robots.agents['all']?.disallow;
 		const agentsList = Object.keys(traces.robots.agents)
@@ -44,7 +52,8 @@ export default class AvoidableBotTrafficAudit extends Audit {
 		);
 		const passAudit = () => {
 			if (robotMetaTag.length || xRobotTag.length) {
-				errorMessage = 'Consider handling all bot in a robots.txt file';
+				debug('Found robot meta tag or xRobotTag')
+				errorMessage = 'Consider handling all bot traffic in the robots.txt file';
 				return true;
 			}
 			if (disallowRulesForAllUserAgents?.length) return true;
