@@ -21,8 +21,6 @@ jobs:
       matrix:
         node:
           - 16
-          - 14.17
-          - 12.22
         puppeteer_version:
           - 13.1.0
         os:
