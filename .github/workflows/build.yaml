@@ -66,6 +66,6 @@ jobs:
       - name: npm ci
         uses: bahmutov/npm-install@v1
       - run: npm run build
-      - run: npm publish
+      - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
