@@ -130,7 +130,7 @@ Visit the site [https://audits.digital](https://audits.digital), enter a URL and
 
 <img style="text-align: center;" src="https://raw.githubusercontent.com/auditsdigital/sustainability/master/ui.png">
 
-<details><summary>NPM - @auditsdigital/sustainability </summary>
+<details><summary>NPM - sustainability </summary>
 
 Install puppeteer (if you don't already have it installed):
 
@@ -138,7 +138,7 @@ Install puppeteer (if you don't already have it installed):
 
 Install sustainability locally:
 
-`npm i @auditsdigital/sustainability`
+`npm i sustainability`
 
 Now you can use it on your Node.js application. Take as example the following code:
 
