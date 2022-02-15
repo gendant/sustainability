@@ -1,7 +1,7 @@
 {
   "name": "@auditsdigital/sustainability",
   "version": "0.5.0",
-  "description": "digital sustainability audits for the web",
+  "description": "Digital Sustainability Audits",
   "main": "build/index.js",
   "bin": {
     "sustainability": "build/cli.js"
@@ -18,13 +18,13 @@
   "author": "David Monras",
   "repository": {
     "type": "git",
-    "url": "https://github.com/digital-audits/sustainability.git"
+    "url": "https://github.com/auditsdigital/sustainability.git"
   },
   "funding": {
     "type": "opencollective",
     "url": "https://opencollective.com/das"
   },
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "peerDependencies": {
     "puppeteer": ">=1.5.0"
   },
