@@ -1,5 +1,16 @@
 # Changelog
 
+## v. 0.5.1 (23/2/2022)
+
+- Fixes cold run page not closing 
+
+## v. 0.5.0 (15/2/2022)
+
+- Updates sustainability with the new design
+- Upgrades packages
+- Removes telemetry option
+- Updates licensing to MIT
+
 ## v. 0.4.11 (15/4/2021)
 
 - New option: Enable/Disable optional telemetry collected completely anonimously and never including private data.
