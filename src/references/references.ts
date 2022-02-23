@@ -8,8 +8,8 @@
  * @see https://github.com/electricitymap/electricitymap-contrib/blob/master/config/co2eq_parameters.json#L39
  */
 export const defaultCarbonIntensity: [number, string] = [
-	301.13684338512996,
-	'gCO2eq/kWh'
+  301.13684338512996,
+  "gCO2eq/kWh",
 ];
 
 /**
@@ -17,12 +17,12 @@ export const defaultCarbonIntensity: [number, string] = [
  * @see https://onlinelibrary.wiley.com/doi/full/10.1111/jiec.12630
  */
 export const variables: Variables = {
-	dataCenter: [0.06, 'kWh/GB'],
-	coreNetwork: [0.052, 'kWh/GB'],
-	defaultDailyVisitors: [100, 'visits/day'],
-	defaultCarbonIntensity
+  dataCenter: [0.06, "kWh/GB"],
+  coreNetwork: [0.052, "kWh/GB"],
+  defaultDailyVisitors: [100, "visits/day"],
+  defaultCarbonIntensity,
 };
 
 interface Variables {
-	[key: string]: [number, string];
+  [key: string]: [number, string];
 }

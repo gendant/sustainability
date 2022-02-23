@@ -35,6 +35,7 @@ jobs:
         uses: bahmutov/npm-install@v1 # basically npm ci with a cache
       - run: npm install puppeteer@${{ matrix.puppeteer_version }}
       # - run: npm test
+      - run: npm run format:check
       - run: npm run coverage
       - name: Collect coverage
         uses: coverallsapp/github-action@1.1.3

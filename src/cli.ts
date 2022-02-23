@@ -1,47 +1,47 @@
 #!/usr/bin/env node
 
-import * as Debug from 'debug';
-import * as fs from 'fs';
-import * as minimist from 'minimist';
-import { Sustainability } from '.';
-import { AuditSettings } from './types';
-import * as util from './utils/utils';
-const version: string = require('../package.json').version;
-const name: string = require('../package.json').name;
+import * as Debug from "debug";
+import * as fs from "fs";
+import * as minimist from "minimist";
+import { Sustainability } from ".";
+import { AuditSettings } from "./types";
+import * as util from "./utils/utils";
+const version: string = require("../package.json").version;
+const name: string = require("../package.json").name;
 
-const debug = util.debugGenerator('CLI');
+const debug = util.debugGenerator("CLI");
 
 const args = process.argv.slice(2);
 const argv = minimist(args, {
-	boolean: ['help', 'version', 'nosandbox', 'debug'],
-	string: ['output', 'viewport', 'maxnav'],
-	alias: {
-		help: 'h',
-		version: 'v',
-		output: 'o',
-		debug: 'd'
-	},
-	unknown: parameter => {
-		if (parameter.startsWith('-')) {
-			console.warn('Ignored unknown option: ' + parameter + '\n');
-			return false;
-		}
+  boolean: ["help", "version", "nosandbox", "debug"],
+  string: ["output", "viewport", "maxnav"],
+  alias: {
+    help: "h",
+    version: "v",
+    output: "o",
+    debug: "d",
+  },
+  unknown: (parameter) => {
+    if (parameter.startsWith("-")) {
+      console.warn("Ignored unknown option: " + parameter + "\n");
+      return false;
+    }
 
-		return true;
-	}
+    return true;
+  },
 });
 
 if (argv.version) {
-	console.log(version);
-	process.exit(0);
+  console.log(version);
+  process.exit(0);
 }
 
 if (argv.debug) {
-	Debug.enable('sustainability:*');
+  Debug.enable("sustainability:*");
 }
 
 if (argv.help) {
-	console.log(`
+  console.log(`
     Usage: ${name} [opts] url
     Available options:
 
@@ -52,101 +52,101 @@ if (argv.help) {
     --debug or -d                 Enables verbose logging.
     --version or -v               Prints out ${name} version
     `);
-	process.exit(0);
+  process.exit(0);
 }
 
 const parsedMaxNav = (time: string) => {
-	if (Number(time) >= 15000) {
-		debug(`Set maxnav to ${time}`);
-		return Number(time);
-	}
+  if (Number(time) >= 15000) {
+    debug(`Set maxnav to ${time}`);
+    return Number(time);
+  }
 
-	console.error(`Invalid maxnav value ${time} ms`);
-	process.exit(1);
+  console.error(`Invalid maxnav value ${time} ms`);
+  process.exit(1);
 };
 
 const url = argv._[0];
 
-if (argv.viewport && argv.viewport === 'mobile') {
-	debug('Set mobile device');
+if (argv.viewport && argv.viewport === "mobile") {
+  debug("Set mobile device");
 }
 
 if (argv.nosandbox) {
-	debug('Set nosandbox opt in puppeteer launch');
+  debug("Set nosandbox opt in puppeteer launch");
 }
 
 try {
-	new URL(url);
+  new URL(url);
 } catch (error) {
-	console.error(
-		`${url} is not a valid URL. Make sure to include the scheme (i.e http/https)`
-	);
-	process.exit(1);
+  console.error(
+    `${url} is not a valid URL. Make sure to include the scheme (i.e http/https)`
+  );
+  process.exit(1);
 }
 
 const options: AuditSettings = {
-	...(argv.nosandbox
-		? {
-			launchSettings: {
-				args: ['--no-sandbox', '--disable-setuid-sandbox']
-			}
-		}
-		: {}),
-	...(argv.viewport || argv.maxnav
-		? {
-			connectionSettings: {
-				...(argv.viewport === 'mobile'
-					? {
-						emulatedDevice: {
-							name: 'mobile',
-							userAgent:
-								'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36',
-							viewport: {
-								width: 360,
-								height: 640
-							}
-						}
-					}
-					: {}),
-				...(argv.maxnav
-					? {
-						maxNavigationTime: parsedMaxNav(argv.maxnav)
-					}
-					: {})
-			}
-		}
-		: {})
+  ...(argv.nosandbox
+    ? {
+        launchSettings: {
+          args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        },
+      }
+    : {}),
+  ...(argv.viewport || argv.maxnav
+    ? {
+        connectionSettings: {
+          ...(argv.viewport === "mobile"
+            ? {
+                emulatedDevice: {
+                  name: "mobile",
+                  userAgent:
+                    "Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36",
+                  viewport: {
+                    width: 360,
+                    height: 640,
+                  },
+                },
+              }
+            : {}),
+          ...(argv.maxnav
+            ? {
+                maxNavigationTime: parsedMaxNav(argv.maxnav),
+              }
+            : {}),
+        },
+      }
+    : {}),
 };
 
-process.on('unhandledRejection', error => {
-	console.log(`Unhandled promise rejection. 
+process.on("unhandledRejection", (error) => {
+  console.log(`Unhandled promise rejection. 
 	This seems to be a problem with DAS. Please, report this bug at https://github.com/digital-audits/sustainability/issues.
 	${error}`);
 });
 
 Sustainability.audit(url, Object.keys(options).length ? options : {})
-	.then(report => {
-		if (argv.output) {
-			const filename = argv.output;
-			debug(`Writing file to ${filename}`);
-			try {
-				fs.writeFileSync(
-					filename,
-					JSON.stringify(report, null, 2) + '\n',
-					'utf8'
-				);
-				console.log(
-					`Success. Kindly find the latest sustainability report at ${filename}.`
-				);
-			} catch (err) {
-				console.error('Unable to write file: ' + filename + '\n' + err);
-				process.exit(2);
-			}
-		} else {
-			console.log(JSON.stringify(report, null, 2));
-		}
-	})
-	.catch(error => {
-		console.error(error);
-		process.exit(3);
-	});
+  .then((report) => {
+    if (argv.output) {
+      const filename = argv.output;
+      debug(`Writing file to ${filename}`);
+      try {
+        fs.writeFileSync(
+          filename,
+          JSON.stringify(report, null, 2) + "\n",
+          "utf8"
+        );
+        console.log(
+          `Success. Kindly find the latest sustainability report at ${filename}.`
+        );
+      } catch (err) {
+        console.error("Unable to write file: " + filename + "\n" + err);
+        process.exit(2);
+      }
+    } else {
+      console.log(JSON.stringify(report, null, 2));
+    }
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exit(3);
+  });

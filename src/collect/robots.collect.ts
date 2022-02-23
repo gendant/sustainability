@@ -1,104 +1,104 @@
-import { PageContext } from '../types';
-import { CollectMeta } from '../types/audit';
-import { PrivateSettings } from '../types/settings';
-import { CollectRobotsTraces, RobotsFormat } from '../types/traces';
-import * as util from '../utils/utils';
-import Collect from './collect';
+import { PageContext } from "../types";
+import { CollectMeta } from "../types/audit";
+import { PrivateSettings } from "../types/settings";
+import { CollectRobotsTraces, RobotsFormat } from "../types/traces";
+import * as util from "../utils/utils";
+import Collect from "./collect";
 
 // Inspired from https://github.com/b4dnewz/robots-parse/blob/master/src/parser.ts work
 
 export default class CollectRobots extends Collect {
-	static get meta() {
-		return {
-			id: 'robotscollect',
-			passContext: 'networkidle0',
-			debug: util.debugGenerator('Robots collect')
-		} as CollectMeta;
-	}
+  static get meta() {
+    return {
+      id: "robotscollect",
+      passContext: "networkidle0",
+      debug: util.debugGenerator("Robots collect"),
+    } as CollectMeta;
+  }
 
-	static async collect(
-		pageContext: PageContext,
-		settings: PrivateSettings
-	): Promise<CollectRobotsTraces | undefined> {
-		const debug = CollectRobots.meta.debug;
-		debug('running');		
-		try {
-			const patterns = {
-				agents: /^([Uu]ser-[Aa]gent:) (.+)$/,
-				allow: /^([Aa]llow:) (\/(.+)?)$/,
-				disallow: /^([Dd]isallow:) (\/(.+)?)$/,
-				host: /^([Hh]ost:) (.+)$/,
-				sitemaps: /^([Ss]itemap:) (.+)$/
-			};
+  static async collect(
+    pageContext: PageContext,
+    settings: PrivateSettings
+  ): Promise<CollectRobotsTraces | undefined> {
+    const debug = CollectRobots.meta.debug;
+    debug("running");
+    try {
+      const patterns = {
+        agents: /^([Uu]ser-[Aa]gent:) (.+)$/,
+        allow: /^([Aa]llow:) (\/(.+)?)$/,
+        disallow: /^([Dd]isallow:) (\/(.+)?)$/,
+        host: /^([Hh]ost:) (.+)$/,
+        sitemaps: /^([Ss]itemap:) (.+)$/,
+      };
 
-			const results: RobotsFormat = {
-				agents: {},
-				allow: [],
-				disallow: [],
-				host: '',
-				sitemaps: []
-			};
-			const {url} = pageContext;
-			const host = new URL(url).host;
-			debug('Fetching robots.txt');
-			const body = (await util.fetchRobots(host)) || undefined;
-			if (!body) {
-				throw new Error('Body is empty');
-			}
-			
-			const lines = body.match(/[^\r\n]+/g) ?? [];
-			let lastAgent = 'all';
-			const getMatches = (regexp: RegExp, line: string) =>
-				line.match(regexp)![2];
+      const results: RobotsFormat = {
+        agents: {},
+        allow: [],
+        disallow: [],
+        host: "",
+        sitemaps: [],
+      };
+      const { url } = pageContext;
+      const host = new URL(url).host;
+      debug("Fetching robots.txt");
+      const body = (await util.fetchRobots(host)) || undefined;
+      if (!body) {
+        throw new Error("Body is empty");
+      }
 
-			lines.forEach(line => {
-				line = line.trim();
-				if (patterns.agents.test(line)) {
-					const matches = getMatches(patterns.agents, line);
-					lastAgent = matches === '*' ? 'all' : matches;
-					results.agents[lastAgent] = {
-						allow: [],
-						disallow: []
-					};
-				}
+      const lines = body.match(/[^\r\n]+/g) ?? [];
+      let lastAgent = "all";
+      const getMatches = (regexp: RegExp, line: string) =>
+        line.match(regexp)![2];
 
-				if (patterns.host.test(line)) {
-					const matches = getMatches(patterns.host, line);
-					results.host = matches;
-				}
+      lines.forEach((line) => {
+        line = line.trim();
+        if (patterns.agents.test(line)) {
+          const matches = getMatches(patterns.agents, line);
+          lastAgent = matches === "*" ? "all" : matches;
+          results.agents[lastAgent] = {
+            allow: [],
+            disallow: [],
+          };
+        }
 
-				if (patterns.allow.test(line)) {
-					const matches = getMatches(patterns.allow, line);
-					results.agents[lastAgent].allow.push(matches);
+        if (patterns.host.test(line)) {
+          const matches = getMatches(patterns.host, line);
+          results.host = matches;
+        }
 
-					if (!results.allow.includes(matches)) {
-						results.allow.push(matches);
-					}
-				}
+        if (patterns.allow.test(line)) {
+          const matches = getMatches(patterns.allow, line);
+          results.agents[lastAgent].allow.push(matches);
 
-				if (patterns.disallow.test(line)) {
-					const matches = getMatches(patterns.disallow, line);
-					results.agents[lastAgent].disallow.push(matches);
+          if (!results.allow.includes(matches)) {
+            results.allow.push(matches);
+          }
+        }
 
-					if (!results.disallow.includes(matches)) {
-						results.disallow.push(matches);
-					}
-				}
+        if (patterns.disallow.test(line)) {
+          const matches = getMatches(patterns.disallow, line);
+          results.agents[lastAgent].disallow.push(matches);
 
-				if (patterns.sitemaps.test(line)) {
-					const matches = getMatches(patterns.sitemaps, line);
-					if (matches?.length) results.sitemaps.push(matches);
-				}
-			});
+          if (!results.disallow.includes(matches)) {
+            results.disallow.push(matches);
+          }
+        }
 
-			debug('done');
+        if (patterns.sitemaps.test(line)) {
+          const matches = getMatches(patterns.sitemaps, line);
+          if (matches?.length) results.sitemaps.push(matches);
+        }
+      });
 
-			return {
-				robots: results
-			};
-		} catch (error) {
-			debug('Unable to parse robots.txt');
-			return undefined;
-		}
-	}
+      debug("done");
+
+      return {
+        robots: results,
+      };
+    } catch (error) {
+      debug("Unable to parse robots.txt");
+      return undefined;
+    }
+  }
 }

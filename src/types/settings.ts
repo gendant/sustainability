@@ -1,38 +1,42 @@
-import { BrowserConnectOptions, BrowserLaunchArgumentOptions, LaunchOptions, Product } from 'puppeteer';
-import Audit from '../audits/audit';
-import Collect from '../collect/collect';
+import {
+  BrowserConnectOptions,
+  BrowserLaunchArgumentOptions,
+  LaunchOptions,
+  Product,
+} from "puppeteer";
+import Audit from "../audits/audit";
+import Collect from "../collect/collect";
 
 export interface DefaultSettings {
-	LAUNCH_SETTINGS: LaunchPuppeteerOptions;
-	CONNECTION_SETTINGS: PrivateSettings;
-	CATEGORIES: {
-		server: { description: string };
-		design: { description: string };
-	};
-	AUDITS: CollectorAndAudit;
-	REPORT: {
-		scoring: Scoring;
-		format?: string;
-		webhook?: string;
-	};
+  LAUNCH_SETTINGS: LaunchPuppeteerOptions;
+  CONNECTION_SETTINGS: PrivateSettings;
+  CATEGORIES: {
+    server: { description: string };
+    design: { description: string };
+  };
+  AUDITS: CollectorAndAudit;
+  REPORT: {
+    scoring: Scoring;
+    format?: string;
+    webhook?: string;
+  };
 }
 
-
 export interface CollectorAndAudit {
-	collectors: Array<typeof Collect>;
-	audits: Array<typeof Audit>;
+  collectors: Array<typeof Collect>;
+  audits: Array<typeof Audit>;
 }
 
 export interface ConnectionSettings {
-	/**
-	 * Navigation timeout. Defaults to 30000 ms
-	 */
-	maxNavigationTime?: number;
-	/**
-	 * Page srolling timeout. Defaults to 30 ms
-	 */
-	maxScrollInterval?: number;
-	/**
+  /**
+   * Navigation timeout. Defaults to 30000 ms
+   */
+  maxNavigationTime?: number;
+  /**
+   * Page srolling timeout. Defaults to 30 ms
+   */
+  maxScrollInterval?: number;
+  /**
 	 * Emulated device defaults to: 
 	 * name: 'Desktop 1920x1080',
 			userAgent:
@@ -43,62 +47,64 @@ export interface ConnectionSettings {
 			}
 	 */
 
-	emulatedDevice?: EmulatedDevice;
-	/**
+  emulatedDevice?: EmulatedDevice;
+  /**
 	 * Emulated location defaults to: 	
 	 * name: 'Seattle',
 			latitude: 47.6062,
 			longitude: -122.3331,
 			accuracy: 100
 	 */
-	location?: EmulatedLocation;
-	/**
-	 * Should push individual audits results as they go. Defaults to false
-	 */
-	streams?: boolean;
-	/**
-	 * Should initialise a cold run to find any potential URL redirect. Defaults to true
-	 */
-	coldRun?: boolean;
+  location?: EmulatedLocation;
+  /**
+   * Should push individual audits results as they go. Defaults to false
+   */
+  streams?: boolean;
+  /**
+   * Should initialise a cold run to find any potential URL redirect. Defaults to true
+   */
+  coldRun?: boolean;
 }
 
 export interface PrivateSettings {
-	maxNavigationTime: number;
-	maxScrollInterval: number;
-	maxScrollWaitingTime: number;
-	emulatedDevice: EmulatedDevice;
-	location: EmulatedLocation;
-	maxThrottle: number;
-	streams: boolean;
-	coldRun: boolean;
+  maxNavigationTime: number;
+  maxScrollInterval: number;
+  maxScrollWaitingTime: number;
+  emulatedDevice: EmulatedDevice;
+  location: EmulatedLocation;
+  maxThrottle: number;
+  streams: boolean;
+  coldRun: boolean;
 }
 
 export interface Scoring {
-	[key: string]: {
-		median: number;
-		p10: number;
-		name: string;
-	};
+  [key: string]: {
+    median: number;
+    p10: number;
+    name: string;
+  };
 }
 export interface EmulatedDevice {
-	name?: string;
-	userAgent: string;
-	viewport: Viewport;
+  name?: string;
+  userAgent: string;
+  viewport: Viewport;
 }
 
 interface EmulatedLocation {
-	name?: string;
-	latitude: number;
-	longitude: number;
-	accuracy: number;
+  name?: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
 }
 
 interface Viewport {
-	width: number;
-	height: number;
+  width: number;
+  height: number;
 }
 
-export type LaunchPuppeteerOptions = LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions & {
-	product?: Product;
-	extraPrefsFirefox?: Record<string, unknown>;
-}
+export type LaunchPuppeteerOptions = LaunchOptions &
+  BrowserLaunchArgumentOptions &
+  BrowserConnectOptions & {
+    product?: Product;
+    extraPrefsFirefox?: Record<string, unknown>;
+  };

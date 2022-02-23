@@ -1,325 +1,336 @@
-import AbortController from 'abort-controller';
-import fetch from 'cross-fetch';
-import * as Debug from 'debug';
-import * as memoizee from 'memoizee';
-import { HTTPRequest as Request, Page } from 'puppeteer';
+import AbortController from "abort-controller";
+import fetch from "cross-fetch";
+import * as Debug from "debug";
+import * as memoizee from "memoizee";
+import { HTTPRequest as Request, Page } from "puppeteer";
 import {
-	getLogNormalScore, groupBy,
-	linearInterpolation, sum
-} from '../bin/statistics';
-import { DEFAULT } from '../settings/settings';
+  getLogNormalScore,
+  groupBy,
+  linearInterpolation,
+  sum,
+} from "../bin/statistics";
+import { DEFAULT } from "../settings/settings";
+import { PageContext, Tracker } from "../types";
 import {
-	PageContext, Tracker
-} from '../types';
+  AuditByFailOrPassOrSkip,
+  AuditReportFormat,
+  AuditsByCategory,
+  AuditType,
+  Meta,
+  Report,
+  Result,
+  SkipMeta,
+  SuccessOrFailureMeta,
+} from "../types/audit";
+import { ConnectionSettings } from "../types/settings";
 import {
-	AuditByFailOrPassOrSkip, AuditReportFormat, AuditsByCategory, AuditType, Meta, Report, Result, SkipMeta, SuccessOrFailureMeta
-} from '../types/audit';
-import { ConnectionSettings } from '../types/settings';
-import { CollectType, Headers, LoadEvent, Record, Traces } from '../types/traces';
+  CollectType,
+  Headers,
+  LoadEvent,
+  Record,
+  Traces,
+} from "../types/traces";
 
 export function debugGenerator(namespace: string): Debug.IDebugger {
-	const debug = Debug(`sustainability: ${namespace}`);
-	return debug;
+  const debug = Debug(`sustainability: ${namespace}`);
+  return debug;
 }
 
-const logToConsole = Debug('sustainability:log');
+const logToConsole = Debug("sustainability:log");
 logToConsole.log = console.error.bind(console);
 
 export function log(message: string | unknown): void {
-	logToConsole(message);
+  logToConsole(message);
 }
 
 export function toHexString(codePointArray: number[]): string[] {
-	return codePointArray.map(
-		codePoint => 'U+' + codePoint.toString(16).toUpperCase()
-	);
+  return codePointArray.map(
+    (codePoint) => "U+" + codePoint.toString(16).toUpperCase()
+  );
 }
 
 // Scroll function adapted from nagy.zsolt.hun https://stackoverflow.com/questions/51529332/puppeteer-scroll-down-until-you-cant-anymore
 export async function scrollFunction(
-	page: Page,
-	maxScrollInterval: number,
-	debug: CallableFunction = debugGenerator('Testing')
+  page: Page,
+  maxScrollInterval: number,
+  debug: CallableFunction = debugGenerator("Testing")
 ): Promise<any> {
-	debug('running scroll function');
-	const ableToScroll = await isPageAbleToScroll(page);
-	if (ableToScroll) {
-	const maxScrollingTime = DEFAULT.CONNECTION_SETTINGS.maxScrollWaitingTime
-	let stopCallback: any = null;
-	const stopPromise = new Promise(x => (stopCallback = x));
-	const stopNavigation = setTimeout(() => stopCallback(()=>{
-		//@ts-ignore private _id
-		const pageId = page.mainFrame()._id;
-		debug(
-			`Forced end of scrolling for page ${pageId} because the URL surpassed the maxScrollingTime`
-		)
-		return
-		
-	}), maxScrollingTime);
-	const scrollAndClearTimeout = async ()=>{
-		await page.evaluate(
-			maxScrollInterval =>
-				new Promise(resolve => {
-					let scrollTop = -1;
-					const interval = setInterval(() => {
-						window.scrollBy(0, 100);
-						const getScrollTop =
-							window.pageYOffset ||
-							document.documentElement.scrollTop ||
-							document.body.scrollTop;
-						if (getScrollTop !== scrollTop) {
-							scrollTop = getScrollTop;
-							return;
-						}
-						clearInterval(interval);
-						resolve(undefined);
-					}, maxScrollInterval);
-				}),
-			maxScrollInterval
-		),
-		clearTimeout(stopNavigation);
+  debug("running scroll function");
+  const ableToScroll = await isPageAbleToScroll(page);
+  if (ableToScroll) {
+    const maxScrollingTime = DEFAULT.CONNECTION_SETTINGS.maxScrollWaitingTime;
+    let stopCallback: any = null;
+    const stopPromise = new Promise((x) => (stopCallback = x));
+    const stopNavigation = setTimeout(
+      () =>
+        stopCallback(() => {
+          //@ts-ignore private _id
+          const pageId = page.mainFrame()._id;
+          debug(
+            `Forced end of scrolling for page ${pageId} because the URL surpassed the maxScrollingTime`
+          );
+          return;
+        }),
+      maxScrollingTime
+    );
+    const scrollAndClearTimeout = async () => {
+      await page.evaluate(
+        (maxScrollInterval) =>
+          new Promise((resolve) => {
+            let scrollTop = -1;
+            const interval = setInterval(() => {
+              window.scrollBy(0, 100);
+              const getScrollTop =
+                window.pageYOffset ||
+                document.documentElement.scrollTop ||
+                document.body.scrollTop;
+              if (getScrollTop !== scrollTop) {
+                scrollTop = getScrollTop;
+                return;
+              }
+              clearInterval(interval);
+              resolve(undefined);
+            }, maxScrollInterval);
+          }),
+        maxScrollInterval
+      ),
+        clearTimeout(stopNavigation);
+    };
+    await Promise.race([scrollAndClearTimeout(), stopPromise]);
 
-	}
-		await Promise.race([
-			scrollAndClearTimeout(),
-			stopPromise
-		]);
-
-	page.emit('scrollFinished');
-	debug('done scrolling');
-	}
+    page.emit("scrollFinished");
+    debug("done scrolling");
+  }
 }
 
 export async function isPageAbleToScroll(page: Page) {
-	const result = await page.evaluate(() => {
-		const initialTopValue =
-			window.pageYOffset ||
-			document.documentElement.scrollTop ||
-			document.body.scrollTop;
+  const result = await page.evaluate(() => {
+    const initialTopValue =
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop;
 
-		window.scrollBy(0, 100);
-		const finalTopValue =
-			window.pageYOffset ||
-			document.documentElement.scrollTop ||
-			document.body.scrollTop;
+    window.scrollBy(0, 100);
+    const finalTopValue =
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop;
 
-		if (finalTopValue !== initialTopValue) {
-			window.scrollBy(0, -100);
-			return true;
-		}
+    if (finalTopValue !== initialTopValue) {
+      window.scrollBy(0, -100);
+      return true;
+    }
 
-		return false;
-	});
+    return false;
+  });
 
-	return result
-
+  return result;
 }
 
 export async function navigate(
-	pageContext: PageContext,
-	waitUntil: LoadEvent | LoadEvent[],
-	debug: CallableFunction,
-	end = false,
-	settings?: ConnectionSettings
+  pageContext: PageContext,
+  waitUntil: LoadEvent | LoadEvent[],
+  debug: CallableFunction,
+  end = false,
+  settings?: ConnectionSettings
 ) {
-	const { page, url } = pageContext;
-	try {
-		//@ts-ignore private _id
-		const pageId = page.mainFrame()._id;
-		debug(`${pageId} Starting navigation to ${url}`);
-		let stopCallback: any = null;
-		const stopPromise = new Promise(x => (stopCallback = x));
-		const navigateAndClearTimeout = async () => {
-			await page.goto(url, {
-				waitUntil,
-				timeout: 0
-			});
-			clearTimeout(stopNavigation);
-		};
+  const { page, url } = pageContext;
+  try {
+    //@ts-ignore private _id
+    const pageId = page.mainFrame()._id;
+    debug(`${pageId} Starting navigation to ${url}`);
+    let stopCallback: any = null;
+    const stopPromise = new Promise((x) => (stopCallback = x));
+    const navigateAndClearTimeout = async () => {
+      await page.goto(url, {
+        waitUntil,
+        timeout: 0,
+      });
+      clearTimeout(stopNavigation);
+    };
 
-		const stopNavigation = setTimeout(
-			() =>
-				stopCallback(
-					debug(
-						`Forced end of navigation for page ${pageId} because the URL surpassed the maxNavigationTime`
-					)
-				),
-			settings?.maxNavigationTime ??
-			DEFAULT.CONNECTION_SETTINGS.maxNavigationTime
-		);
-		await Promise.race([navigateAndClearTimeout(), stopPromise]);
-		debug('Done navigation');
-	} finally {
-		if (end) {
-			await page.evaluate(() => window.stop());
-			await page.close();
-		}
-	}
+    const stopNavigation = setTimeout(
+      () =>
+        stopCallback(
+          debug(
+            `Forced end of navigation for page ${pageId} because the URL surpassed the maxNavigationTime`
+          )
+        ),
+      settings?.maxNavigationTime ??
+        DEFAULT.CONNECTION_SETTINGS.maxNavigationTime
+    );
+    await Promise.race([navigateAndClearTimeout(), stopPromise]);
+    debug("Done navigation");
+  } finally {
+    if (end) {
+      await page.evaluate(() => window.stop());
+      await page.close();
+    }
+  }
 }
 
-function allSettledParser<T>(res: PromiseSettledResult<T>):T | undefined{
-	if (res.status === 'rejected') {
-		safeReject(new Error(`Promise failed with error: ${res.reason}`));
-		
-	}
-	
-	if (res.status === 'fulfilled' && res.value) {
-		return res.value;
-	}
+function allSettledParser<T>(res: PromiseSettledResult<T>): T | undefined {
+  if (res.status === "rejected") {
+    safeReject(new Error(`Promise failed with error: ${res.reason}`));
+  }
 
-	return
+  if (res.status === "fulfilled" && res.value) {
+    return res.value;
+  }
 
-};
+  return;
+}
 
 export function parseAllSettledAudits(
-	data: PromiseSettledResult<PromiseSettledResult<AuditType>[]>
-): Result[]{
-   const result = allSettledParser(data)
-   
-   return result!.map(d=>allSettledParser(d)) as Result[] //fix this
-	
+  data: PromiseSettledResult<PromiseSettledResult<AuditType>[]>
+): Result[] {
+  const result = allSettledParser(data);
+
+  return result!.map((d) => allSettledParser(d)) as Result[]; //fix this
 }
 
 export function parseAllSettledTraces(
-	data: PromiseSettledResult<CollectType>[]
-): Traces{
-
-	const result = data.map(d=>allSettledParser(d))
-	return Object.assign({}, ...result)
-	
+  data: PromiseSettledResult<CollectType>[]
+): Traces {
+  const result = data.map((d) => allSettledParser(d));
+  return Object.assign({}, ...result);
 }
 
 export function safeReject(error: Error, tracker?: Tracker) {
-	if (tracker) {
-		if (error.message.startsWith('Navigation timeout')) {
-			const urls = tracker.urls();
-			if (urls.length > 1) {
-				error.message += `\nTracked URLs that have not finished: ${urls.join(
-					', '
-				)}`;
-			} else if (urls.length > 0) {
-				error.message += `\nFor ${urls[0]}`;
-			}
+  if (tracker) {
+    if (error.message.startsWith("Navigation timeout")) {
+      const urls = tracker.urls();
+      if (urls.length > 1) {
+        error.message += `\nTracked URLs that have not finished: ${urls.join(
+          ", "
+        )}`;
+      } else if (urls.length > 0) {
+        error.message += `\nFor ${urls[0]}`;
+      }
 
-			tracker.dispose();
-		}
-	}
+      tracker.dispose();
+    }
+  }
 
-	throw new Error(`Navigation failed with message: ${error.message}`);
+  throw new Error(`Navigation failed with message: ${error.message}`);
 }
 
 export function createTracker(page: Page): Tracker {
-	const requests = new Set<Request>();
-	const onStarted = (request: Request) => requests.add(request);
-	const onFinished = (request: Request) => requests.delete(request);
-	page.on('request', onStarted);
-	page.on('requestfinished', onFinished);
-	page.on('requestfailed', onFinished);
-	return {
-		urls: () => Array.from(requests).map((r: any) => r.url()),
-		dispose: () => {
-			page.off('request', onStarted);
-			page.off('requestfinished', onFinished);
-			page.off('requestfailed', onFinished);
-		}
-	};
+  const requests = new Set<Request>();
+  const onStarted = (request: Request) => requests.add(request);
+  const onFinished = (request: Request) => requests.delete(request);
+  page.on("request", onStarted);
+  page.on("requestfinished", onFinished);
+  page.on("requestfailed", onFinished);
+  return {
+    urls: () => Array.from(requests).map((r: any) => r.url()),
+    dispose: () => {
+      page.off("request", onStarted);
+      page.off("requestfinished", onFinished);
+      page.off("requestfailed", onFinished);
+    },
+  };
 }
 
-const GREEN_SERVER_API = 'http://api.thegreenwebfoundation.org/greencheck';
+const GREEN_SERVER_API = "http://api.thegreenwebfoundation.org/greencheck";
 
 interface APIResponse {
-	green: boolean;
-	url: string;
-	hostedby: string;
-	hostedbywebsite: string;
-	error?: string;
+  green: boolean;
+  url: string;
+  hostedby: string;
+  hostedbywebsite: string;
+  error?: string;
 }
 const isGreenServer = async (
-	hostname: string
+  hostname: string
 ): Promise<APIResponse | undefined> => {
-	const controller = new AbortController();
-	const timeout = setTimeout(() => {
-		controller.abort();
-	}, DEFAULT.CONNECTION_SETTINGS.maxThrottle);
-	const url = `${GREEN_SERVER_API}/${hostname}`;
-	try {
-		const response = await fetch(url, {
-			signal: controller.signal
-		});
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, DEFAULT.CONNECTION_SETTINGS.maxThrottle);
+  const url = `${GREEN_SERVER_API}/${hostname}`;
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+    });
 
-		const responseToJson = await response.json() as undefined | APIResponse;
+    const responseToJson = (await response.json()) as undefined | APIResponse;
 
-		return responseToJson;
-	} catch (error) {
-		log(
-			`Error: Failed to fetch response from green server API. ${error} ${url}`
-		);
-		return await new Promise(resolve => resolve(undefined));
-	} finally {
-		clearTimeout(timeout);
-	}
+    return responseToJson;
+  } catch (error) {
+    log(
+      `Error: Failed to fetch response from green server API. ${error} ${url}`
+    );
+    return await new Promise((resolve) => resolve(undefined));
+  } finally {
+    clearTimeout(timeout);
+  }
 };
 
 export const isGreenServerMem = memoizee(isGreenServer, { async: true });
 
 export async function fetchRobots(
-	host: string,
-	secure = false
+  host: string,
+  secure = false
 ): Promise<string | undefined> {
-	const controller = new AbortController();
-	const timeout = setTimeout(() => {
-		controller.abort();
-	}, DEFAULT.CONNECTION_SETTINGS.maxThrottle + 15000);
-	const url = `http${secure ? 's' : ''}://${host}/robots.txt`;
-	try {
-		const response = await fetch(url, {
-			signal: controller.signal,
-			redirect: 'follow'
-		});
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, DEFAULT.CONNECTION_SETTINGS.maxThrottle + 15000);
+  const url = `http${secure ? "s" : ""}://${host}/robots.txt`;
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      redirect: "follow",
+    });
 
-		if (!response.ok) {
-			throw new Error(`${response.statusText}`);
-		}
+    if (!response.ok) {
+      throw new Error(`${response.statusText}`);
+    }
 
-		const responseText = await response.text();
+    const responseText = await response.text();
 
-		return responseText;
-	} catch (error) {
-		log(`Error: Failed to fetch robots.txt ${error} ${url}`);
-		return await new Promise(resolve => resolve(undefined));
-	} finally {
-		clearTimeout(timeout);
-	}
+    return responseText;
+  } catch (error) {
+    log(`Error: Failed to fetch robots.txt ${error} ${url}`);
+    return await new Promise((resolve) => resolve(undefined));
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function safeNavigateTimeout(
-	page: Page,
-	waitUntil: LoadEvent,
-	maxNavigationTime: number,
-	debug?: CallableFunction
-	) {
-	if (debug) {
-		debug('Waiting for navigation to load');
-	}
+  page: Page,
+  waitUntil: LoadEvent,
+  maxNavigationTime: number,
+  debug?: CallableFunction
+) {
+  if (debug) {
+    debug("Waiting for navigation to load");
+  }
 
-	let stopCallback: any = null;
-	const navigate = async () => {
-		await page.waitForNavigation({ waitUntil });
-		clearTimeout(stopNavigation);
-	};
+  let stopCallback: any = null;
+  const navigate = async () => {
+    await page.waitForNavigation({ waitUntil });
+    clearTimeout(stopNavigation);
+  };
 
-	const stopPromise = new Promise(x => (stopCallback = x));
-	const stopNavigation = setTimeout(() => stopCallback(()=>{
-		if(debug){
-			//@ts-ignore private _id
-			const pageId = page.mainFrame()._id;
-			debug(
-				`Forced end of navigation for page ${pageId} because the URL surpassed the maxNavigationTime`
-			)
-		}
-		return
-	}), maxNavigationTime);
-	return Promise.race([navigate(), stopPromise]);
+  const stopPromise = new Promise((x) => (stopCallback = x));
+  const stopNavigation = setTimeout(
+    () =>
+      stopCallback(() => {
+        if (debug) {
+          //@ts-ignore private _id
+          const pageId = page.mainFrame()._id;
+          debug(
+            `Forced end of navigation for page ${pageId} because the URL surpassed the maxNavigationTime`
+          );
+        }
+        return;
+      }),
+    maxNavigationTime
+  );
+  return Promise.race([navigate(), stopPromise]);
 }
 
 /**
@@ -332,105 +343,109 @@ export async function safeNavigateTimeout(
  *
  */
 export function computeLogNormalScore(
-	controlPoints: { median: number; p10: number },
-	value: number
+  controlPoints: { median: number; p10: number },
+  value: number
 ): number {
-	const percentile = getLogNormalScore(controlPoints, value);
+  const percentile = getLogNormalScore(controlPoints, value);
 
-	return clampTo2Decimals(percentile);
+  return clampTo2Decimals(percentile);
 }
 
 export const clampTo2Decimals = (value: number) =>
-	Math.round(value * 100) / 100;
+  Math.round(value * 100) / 100;
 
 /**
  * @description Computes a global calculated as the average sum of category scores.
  */
 export function computeScore(audits: any) {
-	return Math.round(sum(audits.map((audit: any) => audit.score)) / 2);
+  return Math.round(sum(audits.map((audit: any) => audit.score)) / 2);
 }
 
 export function groupAudits(list: Result[]): AuditsByCategory[] {
-	const resultsGrouped = groupBy(list, (audit: Result) => audit.meta.category);
-	const audits = Array.from(resultsGrouped.keys()).map(
-		(key: 'server' | 'design') => {
-			const groupByKey = resultsGrouped.get(key);
-			const auditsByFailOrPassOrSkip = successOrFailureOrSkipAudits(groupByKey);
-			const groupByKeyNonSkip = groupByKey.filter(
-				(result: Result) => result.scoreDisplayMode !== 'skip'
-			);
-			const auditScoreRaw =
-				sum(groupByKeyNonSkip.map((result: Result) => result.score)) /
-				groupByKeyNonSkip.length;
-			const auditScore = Math.round(auditScoreRaw * 100);
-			const catDescription = DEFAULT.CATEGORIES[key].description;
+  const resultsGrouped = groupBy(list, (audit: Result) => audit.meta.category);
+  const audits = Array.from(resultsGrouped.keys()).map(
+    (key: "server" | "design") => {
+      const groupByKey = resultsGrouped.get(key);
+      const auditsByFailOrPassOrSkip = successOrFailureOrSkipAudits(groupByKey);
+      const groupByKeyNonSkip = groupByKey.filter(
+        (result: Result) => result.scoreDisplayMode !== "skip"
+      );
+      const auditScoreRaw =
+        sum(groupByKeyNonSkip.map((result: Result) => result.score)) /
+        groupByKeyNonSkip.length;
+      const auditScore = Math.round(auditScoreRaw * 100);
+      const catDescription = DEFAULT.CATEGORIES[key].description;
 
-			return {
-				category: { name: key, description: catDescription },
-				score: auditScore,
-				audits: auditsByFailOrPassOrSkip
-			};
-		}
-	);
+      return {
+        category: { name: key, description: catDescription },
+        score: auditScore,
+        audits: auditsByFailOrPassOrSkip,
+      };
+    }
+  );
 
-	return audits;
+  return audits;
 }
 
 export function successOrFailureMeta(
-	meta: Meta,
-	score: number
+  meta: Meta,
+  score: number
 ): SuccessOrFailureMeta {
-	const { title, failureTitle, collectors, ...output } = meta;
+  const { title, failureTitle, collectors, ...output } = meta;
 
-	if (hasFailed(score)) {
-		return { title: failureTitle, ...output };
-	}
+  if (hasFailed(score)) {
+    return { title: failureTitle, ...output };
+  }
 
-	return { title, ...output };
+  return { title, ...output };
 }
 
 export function skipMeta(meta: Meta): SkipMeta {
-	return { id: meta.id, category: meta.category, description: meta.description };
+  return {
+    id: meta.id,
+    category: meta.category,
+    description: meta.description,
+  };
 }
 
 export function hasFailed(score: number) {
-	if (score === 0 || score <= 0.49) {
-		return true;
-	}
+  if (score === 0 || score <= 0.49) {
+    return true;
+  }
 
-	return false;
+  return false;
 }
 
 export function successOrFailureOrSkipAudits(
-	audits: AuditReportFormat[]
+  audits: AuditReportFormat[]
 ): AuditByFailOrPassOrSkip {
-	const out = audits.reduce(
-		(object, v) => {
-			const skipAudit = v.scoreDisplayMode === 'skip';
-			(skipAudit
-				? object.skip
-				: hasFailed(v.score)
-					? object.fail
-					: object.pass
-			).push(v);
-			return object;
-		},
-		{ pass: [], fail: [], skip: [] } as AuditByFailOrPassOrSkip
-	);
+  const out = audits.reduce(
+    (object, v) => {
+      const skipAudit = v.scoreDisplayMode === "skip";
+      (skipAudit
+        ? object.skip
+        : hasFailed(v.score)
+        ? object.fail
+        : object.pass
+      ).push(v);
+      return object;
+    },
+    { pass: [], fail: [], skip: [] } as AuditByFailOrPassOrSkip
+  );
 
-	return out;
+  return out;
 }
 
 export function removeQuotes(text: string): string {
-	if (text.startsWith(`’`)) {
-		return text.replace(/'/g, '');
-	}
+  if (text.startsWith(`’`)) {
+    return text.replace(/'/g, "");
+  }
 
-	if (text.startsWith('"')) {
-		return text.replace(/"/g, '');
-	}
+  if (text.startsWith('"')) {
+    return text.replace(/"/g, "");
+  }
 
-	return text;
+  return text;
 }
 
 /**
@@ -438,148 +453,154 @@ export function removeQuotes(text: string): string {
  */
 
 export function getCacheHitProbability(maxAgeInSecs: number) {
-	const RESOURCE_AGE_IN_HOURS_DECILES = [
-		0,
-		0.2,
-		1,
-		3,
-		8,
-		12,
-		24,
-		48,
-		72,
-		168,
-		8760,
-		Infinity
-	];
-	const maxAgeInHours = maxAgeInSecs / 3600;
-	const upperDecileIndex = RESOURCE_AGE_IN_HOURS_DECILES.findIndex(
-		decile => decile >= maxAgeInHours
-	);
+  const RESOURCE_AGE_IN_HOURS_DECILES = [
+    0,
+    0.2,
+    1,
+    3,
+    8,
+    12,
+    24,
+    48,
+    72,
+    168,
+    8760,
+    Infinity,
+  ];
+  const maxAgeInHours = maxAgeInSecs / 3600;
+  const upperDecileIndex = RESOURCE_AGE_IN_HOURS_DECILES.findIndex(
+    (decile) => decile >= maxAgeInHours
+  );
 
-	// Clip the likelihood between 0 and 1
-	if (upperDecileIndex === RESOURCE_AGE_IN_HOURS_DECILES.length - 1) return 1;
-	if (upperDecileIndex === 0) return 0;
+  // Clip the likelihood between 0 and 1
+  if (upperDecileIndex === RESOURCE_AGE_IN_HOURS_DECILES.length - 1) return 1;
+  if (upperDecileIndex === 0) return 0;
 
-	// Use the two closest decile points as control points
-	const upperDecileValue = RESOURCE_AGE_IN_HOURS_DECILES[upperDecileIndex];
-	const lowerDecileValue = RESOURCE_AGE_IN_HOURS_DECILES[upperDecileIndex - 1];
-	const upperDecile = upperDecileIndex / 10;
-	const lowerDecile = (upperDecileIndex - 1) / 10;
+  // Use the two closest decile points as control points
+  const upperDecileValue = RESOURCE_AGE_IN_HOURS_DECILES[upperDecileIndex];
+  const lowerDecileValue = RESOURCE_AGE_IN_HOURS_DECILES[upperDecileIndex - 1];
+  const upperDecile = upperDecileIndex / 10;
+  const lowerDecile = (upperDecileIndex - 1) / 10;
 
-	// Approximate the real likelihood with linear interpolation
-	return linearInterpolation(
-		lowerDecileValue,
-		lowerDecile,
-		upperDecileValue,
-		upperDecile,
-		maxAgeInHours
-	);
+  // Approximate the real likelihood with linear interpolation
+  return linearInterpolation(
+    lowerDecileValue,
+    lowerDecile,
+    upperDecileValue,
+    upperDecile,
+    maxAgeInHours
+  );
 }
 
 export function computeCacheLifetimeInSeconds(
-	headers: Headers,
-	cacheControl: any
+  headers: Headers,
+  cacheControl: any
 ) {
-	if (cacheControl?.['max-age'] !== undefined) {
-		return cacheControl['max-age'];
-	}
+  if (cacheControl?.["max-age"] !== undefined) {
+    return cacheControl["max-age"];
+  }
 
-	const expiresHeaders = headers.expires;
-	if (expiresHeaders) {
-		const expires = new Date(expiresHeaders).getTime();
-		// Invalid expires values MUST be treated as already expired
-		if (!expires) return 0;
-		return Math.ceil((expires - Date.now()) / 1000);
-	}
+  const expiresHeaders = headers.expires;
+  if (expiresHeaders) {
+    const expires = new Date(expiresHeaders).getTime();
+    // Invalid expires values MUST be treated as already expired
+    if (!expires) return 0;
+    return Math.ceil((expires - Date.now()) / 1000);
+  }
 
-	return null;
+  return null;
 }
 
 export function isCacheableAsset(record: Record) {
-	const CACHEABLE_STATUS_CODES = new Set([200, 203, 206]);
-	const NON_NETWORK_PROTOCOLS = ['blob', 'data', 'intent'];
+  const CACHEABLE_STATUS_CODES = new Set([200, 203, 206]);
+  const NON_NETWORK_PROTOCOLS = ["blob", "data", "intent"];
 
-	/** @type {Set<LH.Crdp.Network.ResourceType>} */
-	const STATIC_RESOURCE_TYPES = new Set([
-		'font',
-		'image',
-		'media',
-		'script',
-		'stylesheet'
-	]);
+  /** @type {Set<LH.Crdp.Network.ResourceType>} */
+  const STATIC_RESOURCE_TYPES = new Set([
+    "font",
+    "image",
+    "media",
+    "script",
+    "stylesheet",
+  ]);
 
-	// It's not a request loaded over the network, caching makes no sense
-	if (NON_NETWORK_PROTOCOLS.includes(record.request.protocol!)) return false;
+  // It's not a request loaded over the network, caching makes no sense
+  if (NON_NETWORK_PROTOCOLS.includes(record.request.protocol!)) return false;
 
-	return (
-		CACHEABLE_STATUS_CODES.has(record.response.status) &&
-		STATIC_RESOURCE_TYPES.has(record.request.resourceType)
-	);
+  return (
+    CACHEABLE_STATUS_CODES.has(record.response.status) &&
+    STATIC_RESOURCE_TYPES.has(record.request.resourceType)
+  );
 }
 
 export function shouldSkipRecord(headers: Headers, cacheControl: any) {
-	// The HTTP/1.0 Pragma header can disable caching if cache-control is not set, see https://tools.ietf.org/html/rfc7234#section-5.4
-	if (!cacheControl && (headers.pragma || '').includes('no-cache')) {
-		return true;
-	}
+  // The HTTP/1.0 Pragma header can disable caching if cache-control is not set, see https://tools.ietf.org/html/rfc7234#section-5.4
+  if (!cacheControl && (headers.pragma || "").includes("no-cache")) {
+    return true;
+  }
 
-	// Ignore assets where policy implies they should not be cached long periods
-	if (
-		cacheControl &&
-		(cacheControl['must-revalidate'] ||
-			cacheControl['no-cache'] ||
-			cacheControl['no-store'] ||
-			cacheControl.private)
-	) {
-		return true;
-	}
+  // Ignore assets where policy implies they should not be cached long periods
+  if (
+    cacheControl &&
+    (cacheControl["must-revalidate"] ||
+      cacheControl["no-cache"] ||
+      cacheControl["no-store"] ||
+      cacheControl.private)
+  ) {
+    return true;
+  }
 
-	return false;
+  return false;
 }
 
 export function getUrlLastSegment(url: string) {
-	return (
-		(url
-			.split('/')
-			.filter(Boolean)
-			.pop() ?? url
-		).split('?')[0]
-	)
+  return (url.split("/").filter(Boolean).pop() ?? url).split("?")[0];
 }
 
 export function str2ab(string: string): ArrayBuffer {
-	const buf = new ArrayBuffer(string.length * 2);
-	const bufView = new Uint16Array(buf);
-	for (let i = 0, stringLength = string.length; i < stringLength; i++) {
-		bufView[i] = string.charCodeAt(i);
-	}
+  const buf = new ArrayBuffer(string.length * 2);
+  const bufView = new Uint16Array(buf);
+  for (let i = 0, stringLength = string.length; i < stringLength; i++) {
+    bufView[i] = string.charCodeAt(i);
+  }
 
-	return buf;
+  return buf;
 }
 
 function getReportObject(reqReport: Report) {
-	const lastAuditDate = reqReport.meta.timing[0]
-	const totalPasses = reqReport.audits[0].audits.pass.map(audit => audit.meta.id).concat(reqReport.audits[1].audits.pass.map(audit => audit.meta.id))
-	const totalFails = reqReport.audits[0].audits.fail.map(audit => audit.meta.id).concat(reqReport.audits[1].audits.fail.map(audit => audit.meta.id))
-	const totalSkips = reqReport.audits[0].audits.skip.map(audit => audit.meta.id).concat(reqReport.audits[1].audits.skip.map(audit => audit.meta.id))
+  const lastAuditDate = reqReport.meta.timing[0];
+  const totalPasses = reqReport.audits[0].audits.pass
+    .map((audit) => audit.meta.id)
+    .concat(reqReport.audits[1].audits.pass.map((audit) => audit.meta.id));
+  const totalFails = reqReport.audits[0].audits.fail
+    .map((audit) => audit.meta.id)
+    .concat(reqReport.audits[1].audits.fail.map((audit) => audit.meta.id));
+  const totalSkips = reqReport.audits[0].audits.skip
+    .map((audit) => audit.meta.id)
+    .concat(reqReport.audits[1].audits.skip.map((audit) => audit.meta.id));
 
-	const serverAudits = reqReport.audits.find(audits => audits.category.name === 'server')!.audits
-	const cfAuditType = Object.values(serverAudits).find((type: AuditReportFormat[]) => type.some(audit => audit.meta.id === 'carbonfootprint')).find((audit: AuditReportFormat) => audit.meta.id === 'carbonfootprint')
+  const serverAudits = reqReport.audits.find(
+    (audits) => audits.category.name === "server"
+  )!.audits;
+  const cfAuditType = Object.values(serverAudits)
+    .find((type: AuditReportFormat[]) =>
+      type.some((audit) => audit.meta.id === "carbonfootprint")
+    )
+    .find((audit: AuditReportFormat) => audit.meta.id === "carbonfootprint");
 
-	return {
-		url: reqReport.meta.url,
-		lastAuditDate,
-		date: reqReport.meta.timing[0],
-		auditSource: 'npm',
-		executionTime: reqReport.meta.timing[1],
-		globalScore: reqReport.globalScore,
-		serverScore: reqReport.audits[0].score,
-		designScore: reqReport.audits[1].score,
-		passes: totalPasses,
-		fails: totalFails,
-		skips: totalSkips,
-		carbonf: +cfAuditType.extendedInfo?.value.extra.carbonfootprint[0],
-		transferSize: +cfAuditType.extendedInfo?.value.extra.totalTransfersize[0]
-	}
+  return {
+    url: reqReport.meta.url,
+    lastAuditDate,
+    date: reqReport.meta.timing[0],
+    auditSource: "npm",
+    executionTime: reqReport.meta.timing[1],
+    globalScore: reqReport.globalScore,
+    serverScore: reqReport.audits[0].score,
+    designScore: reqReport.audits[1].score,
+    passes: totalPasses,
+    fails: totalFails,
+    skips: totalSkips,
+    carbonf: +cfAuditType.extendedInfo?.value.extra.carbonfootprint[0],
+    transferSize: +cfAuditType.extendedInfo?.value.extra.totalTransfersize[0],
+  };
 }

@@ -12,9 +12,10 @@
     "coverage": "jest --coverage --silent",
     "dev": "DEBUG='sustainability:*' ts-node-dev --respawn --poll --clear ./src/index-dev.ts",
     "start:dev": "DEBUG='sustainability:*' ts-node ./src/index-dev.ts",
-    "format": "xo --fix",
+    "format": "prettier --write  \"src/**/*.ts\" \"test/**/*.ts\" ",
     "build": "tsc && cp ./src/bin/glyphhanger-script.js ./build/bin/",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\""
   },
   "author": "David Monras",
   "repository": {
@@ -41,12 +42,12 @@
     "fastify-static": "^4.5.0",
     "husky": "^7.0.0",
     "jest": "^27.5.1",
+    "prettier": "^2.5.1",
     "puppeteer": "^13.3.2",
     "ts-jest": "^27.1.3",
     "ts-node": "^10.5.0",
     "ts-node-dev": "^1.1.8",
-    "typescript": "^4.5.5",
-    "xo": "^0.48.0"
+    "typescript": "^4.5.5"
   },
   "dependencies": {
     "abort-controller": "^3.0.0",
@@ -57,13 +58,6 @@
     "memoizee": "^0.4.14",
     "minimist": "^1.2.5",
     "parse-cache-control": "^1.0.1"
-  },
-  "xo": {
-    "prettier": "true",
-    "ignores": [
-      "!**/examples",
-      "test/**"
-    ]
   },
   "jest": {
     "setupFilesAfterEnv": [

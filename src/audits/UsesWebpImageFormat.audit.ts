@@ -1,84 +1,88 @@
-import { Meta, Result, SkipResult } from '../types/audit';
-import { Traces } from '../types/traces';
-import * as util from '../utils/utils';
-import Audit from './audit';
+import { Meta, Result, SkipResult } from "../types/audit";
+import { Traces } from "../types/traces";
+import * as util from "../utils/utils";
+import Audit from "./audit";
 
 export default class UsesWebpImageFormatAudit extends Audit {
-	static get meta() {
-		return {
-			id: 'webpimages',
-			title: 'Uses WebP image format',
-			failureTitle: `Ensure WebP image are used`,
-			description:
-				'WebP images provides superior lossless and lossy compression for images on the web. They maintain a low file size and high quality at the same time.  Although browser support is good (77%) you may use WebP images along with other fallback sources.',
-			category: 'design',
-			collectors: ['lazymediacollect', 'mediacollect', 'lazymediacollect']
-		} as Meta;
-	}
+  static get meta() {
+    return {
+      id: "webpimages",
+      title: "Uses WebP image format",
+      failureTitle: `Ensure WebP image are used`,
+      description:
+        "WebP images provides superior lossless and lossy compression for images on the web. They maintain a low file size and high quality at the same time.  Although browser support is good (77%) you may use WebP images along with other fallback sources.",
+      category: "design",
+      collectors: ["lazymediacollect", "mediacollect", "lazymediacollect"],
+    } as Meta;
+  }
 
-	/**
-	 *
-	 * @applicable if the page has requested images.
-	 * Get image format using the MIME/type (header: content-type), 
-	 * (careful with this: because sometimes as in AWS S3 the content-type defaults to binary/octet-stream)
-	 * WebP should be used against PNG, JPG or GIF images and ofc base64 data images
-	 */
+  /**
+   *
+   * @applicable if the page has requested images.
+   * Get image format using the MIME/type (header: content-type),
+   * (careful with this: because sometimes as in AWS S3 the content-type defaults to binary/octet-stream)
+   * WebP should be used against PNG, JPG or GIF images and ofc base64 data images
+   */
 
-	static async audit(traces: Traces): Promise<Result | SkipResult> {
-		const debug = util.debugGenerator('UsesWebPImageFormat Audit');
+  static async audit(traces: Traces): Promise<Result | SkipResult> {
+    const debug = util.debugGenerator("UsesWebPImageFormat Audit");
 
-		const mediaImages = [...(traces.lazyMedia ? [traces.lazyMedia.lazyImages] : []).flat(),
-		...traces.record.filter(r => r.request.resourceType === 'image').map(r => r.response.url.toString())];
+    const mediaImages = [
+      ...(traces.lazyMedia ? [traces.lazyMedia.lazyImages] : []).flat(),
+      ...traces.record
+        .filter((r) => r.request.resourceType === "image")
+        .map((r) => r.response.url.toString()),
+    ];
 
-		const isAuditApplicable = (): boolean => {
-			if (!mediaImages.length) return false;
-			if (!mediaImages.some(url => /\.(?:jpg|gif|png|webp)$/.test(url)))
-				return false;
+    const isAuditApplicable = (): boolean => {
+      if (!mediaImages.length) return false;
+      if (!mediaImages.some((url) => /\.(?:jpg|gif|png|webp)$/.test(url)))
+        return false;
 
-			return true;
-		};
+      return true;
+    };
 
-		if (isAuditApplicable()) {
-			debug('running');
-			const auditUrls = new Set<string>();
+    if (isAuditApplicable()) {
+      debug("running");
+      const auditUrls = new Set<string>();
 
-			mediaImages.filter(url => {
-				if (url.startsWith('data:')) {
-					auditUrls.add(url.slice(0, 40));
-					return false;
-				}
-				if (url.endsWith('.webp')) return false;
-				if (!/\.(?:jpg|gif|png)$/.test(url)) return false;
-				const urlLastSegment = util.getUrlLastSegment(url);
-				auditUrls.add(urlLastSegment);
-				return true;
-			});
+      mediaImages.filter((url) => {
+        if (url.startsWith("data:")) {
+          auditUrls.add(url.slice(0, 40));
+          return false;
+        }
+        if (url.endsWith(".webp")) return false;
+        if (!/\.(?:jpg|gif|png)$/.test(url)) return false;
+        const urlLastSegment = util.getUrlLastSegment(url);
+        auditUrls.add(urlLastSegment);
+        return true;
+      });
 
-			const score = Number(auditUrls.size === 0);
-			const meta = util.successOrFailureMeta(
-				UsesWebpImageFormatAudit.meta,
-				score
-			);
-			debug('done');
-			return {
-				meta,
-				score,
-				scoreDisplayMode: 'binary',
-				...(auditUrls.size > 0
-					? {
-						extendedInfo: {
-							value: Array.from(auditUrls.values())
-						}
-					}
-					: {})
-			};
-		}
+      const score = Number(auditUrls.size === 0);
+      const meta = util.successOrFailureMeta(
+        UsesWebpImageFormatAudit.meta,
+        score
+      );
+      debug("done");
+      return {
+        meta,
+        score,
+        scoreDisplayMode: "binary",
+        ...(auditUrls.size > 0
+          ? {
+              extendedInfo: {
+                value: Array.from(auditUrls.values()),
+              },
+            }
+          : {}),
+      };
+    }
 
-		debug('skipping non applicable audit');
+    debug("skipping non applicable audit");
 
-		return {
-			meta: util.skipMeta(UsesWebpImageFormatAudit.meta),
-			scoreDisplayMode: 'skip'
-		};
-	}
+    return {
+      meta: util.skipMeta(UsesWebpImageFormatAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
 }
