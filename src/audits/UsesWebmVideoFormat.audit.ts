@@ -20,7 +20,7 @@ export default class UsesWebmVideoFormatAudit extends Audit {
     const debug = util.debugGenerator("UsesWebMVideoFormat Audit");
     // @ts-ignore flatMap
     let mediaVideos: Array<string[]> = traces.media.videos
-      .filter((v) => v.src.length)
+      .filter((v) => (v.src as string).length)
       .map((v) => v.src);
     const isAuditApplicable = (): boolean => {
       if (!mediaVideos.length) return false;
