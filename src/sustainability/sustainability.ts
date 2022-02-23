@@ -21,23 +21,28 @@ export default class Sustainability {
 		url: string,
 		settings?: AuditSettings
 	): Promise<Report> {
-		const sustainability = new Sustainability();
 		let browser: Browser | undefined;
 		let page: Page;
+		let coldRunPage: Page
+		let redirectURL;
 		const comments: string[] = [];
-		
-		try {
-			browser =
-				settings?.browser ??
-				(await sustainability.startNewConnectionAndReturnBrowser(
-					settings?.launchSettings
-				));
+		const isColdRun = settings?.connectionSettings?.coldRun ?? DEFAULT.CONNECTION_SETTINGS.coldRun
+		const sustainability = new Sustainability();
 
-			let redirectURL = undefined;
-			const isColdRun = settings?.connectionSettings?.coldRun ?? DEFAULT.CONNECTION_SETTINGS.coldRun
+
+		try {
+
+			browser =
+			settings?.browser ??
+			(await sustainability.startNewConnectionAndReturnBrowser(
+				settings?.launchSettings
+			));
+			
 			if (isColdRun) {
-				redirectURL = await sustainability.spawnColdRun(browser, url)
+				coldRunPage = await browser.newPage();
+				redirectURL = await sustainability.spawnColdRun(coldRunPage, url)
 			}
+	
 
 			if (redirectURL) {
 				comments.push(
@@ -62,6 +67,10 @@ export default class Sustainability {
 		} catch (error) {
 			throw new Error(`Error: ${error}`);
 		} finally {
+			if(browser && isColdRun){
+				debug('Closing cold run page...')
+				await coldRunPage!.close()
+			}
 			if (browser && !settings?.browser) {
 				debug('Closing browser...')
 				await browser.close();
@@ -76,8 +85,7 @@ export default class Sustainability {
 		return browser;
 	}
 
-	private async spawnColdRun(browser: Browser, url: string): Promise<string | undefined> {
-		const coldRunPage = await browser.newPage();
+	private async spawnColdRun(coldRunPage: Page, url: string): Promise<string | undefined> {
 		await coldRunPage.setRequestInterception(true);
 		await coldRunPage.setJavaScriptEnabled(false);
 		async function handleRequest(request: any, resolve: any) {
