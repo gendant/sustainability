@@ -5,7 +5,7 @@ import { Page } from "puppeteer";
 import Collect from "../collect/collect";
 import { DEFAULT } from "../settings/settings";
 import { auditStream } from "../sustainability/stream";
-import { AuditSettings, PageContext, Tracker } from "../types";
+import { AuditSettings, PageContext } from "../types";
 import { AuditType, CollectorsIds } from "../types/audit";
 import { PrivateSettings } from "../types/settings";
 import { Traces } from "../types/traces";
@@ -16,7 +16,7 @@ const debug = util.debugGenerator("Commander");
 class Commander {
   private settings = {} as PrivateSettings;
   private readonly audits = DEFAULT.AUDITS;
-  private tracker = {} as Tracker;
+  private id = "";
 
   async setUp(
     pageContext: PageContext,
@@ -29,7 +29,10 @@ class Commander {
         ? { ...DEFAULT.CONNECTION_SETTINGS, ...settings.connectionSettings }
         : DEFAULT.CONNECTION_SETTINGS;
 
-      this.tracker = util.createTracker(page);
+      if (settings?.id) {
+        this.id = settings.id;
+        debug("Setting comander id to:", this.id);
+      }
 
       // Page.setJavaScriptEnabled(false); Speeds up process drastically
       const pageFeaturesArray = [
@@ -174,8 +177,12 @@ class Commander {
       }
 
       const auditResult = await auditInstance.audit(globalTraces);
+      const pushStream = {
+        ...auditResult,
+        ...(this.id ? { id: this.id } : {}),
+      };
       debug(`Streaming ${auditInstance.meta.id} audit`);
-      auditStream.push(JSON.stringify(auditResult));
+      auditStream.push(JSON.stringify(pushStream));
 
       return auditResult;
     });

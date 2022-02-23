@@ -1,5 +1,9 @@
 # Changelog
 
+## v. 0.5.2 (23/2/2022)
+
+- New feature: id in settings
+
 ## v. 0.5.1 (23/2/2022)
 
 - Fixes cold run page not closing 

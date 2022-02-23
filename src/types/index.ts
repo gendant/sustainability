@@ -3,11 +3,11 @@ import { ConnectionSettings, LaunchPuppeteerOptions } from "./settings";
 
 export interface AuditSettings {
   /**
-   * Identifier for the current test. Defaults to uuid
+   * Identifier for the current test
    */
   id?: string;
   /**
-   * Puppeteer browser object. Defaults to a newly instiatiated browser
+   * Puppeteer browser object. Defaults to a newly instantiated browser
    */
   browser?: Browser;
   /**

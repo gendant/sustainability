@@ -29,7 +29,7 @@ import {
   CollectRobotsTraces,
   CollectScreenShotTraces,
   CollectSubfontsTraces,
-  CollectTransferTraces
+  CollectTransferTraces,
 } from "../../src/types/traces";
 import * as util from "../../src/utils/utils";
 
