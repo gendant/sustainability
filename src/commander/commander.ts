@@ -2,6 +2,7 @@ import { EventEmitter, once } from "events";
 import * as fs from "fs";
 import * as path from "path";
 import { Page } from "puppeteer";
+import { Sustainability } from "..";
 import Collect from "../collect/collect";
 import { DEFAULT } from "../settings/settings";
 import { auditStream } from "../sustainability/stream";
@@ -182,7 +183,7 @@ class Commander {
         ...(this.id ? { id: this.id } : {}),
       };
       debug(`Streaming ${auditInstance.meta.id} audit`);
-      auditStream.push(JSON.stringify(pushStream));
+      Sustainability.auditStream.push(JSON.stringify(pushStream));
 
       return auditResult;
     });
