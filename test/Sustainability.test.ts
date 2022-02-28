@@ -69,26 +69,27 @@ describe("Sustainability", () => {
 
   it("custom stream pipe work", async () => {
     const readableStream = new Readable({
-      read(){
+      read() {},
+    });
 
-      }
-    })
-
-    readableStream.on('data', (data)=> expect(data).toBeTruthy())
+    readableStream.on("data", (data) => expect(data).toBeTruthy());
     await runAudit("animations", {
       id: "0x12221ae",
-      connectionSettings: { streams: true, pipe: readableStream, pipeTerminateOnEnd: true},
+      connectionSettings: {
+        streams: true,
+        pipe: readableStream,
+        pipeTerminateOnEnd: true,
+      },
     });
   });
 
   it("stream pipe terminates", async () => {
-
-    Sustainability.auditStream.on('end', ()=>{
+    Sustainability.auditStream.on("end", () => {
       expect(true).toBeTruthy();
-    })
+    });
     await runAudit("animations", {
       id: "0x12221ae",
-      connectionSettings: { streams: true, pipeTerminateOnEnd: true},
+      connectionSettings: { streams: true, pipeTerminateOnEnd: true },
     });
   });
   it("works when custom browser is passed", async () => {

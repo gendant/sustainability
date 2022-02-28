@@ -140,9 +140,9 @@ export type AuditType = Result | SkipResult | undefined;
 
 export interface AuditStreamChunk {
   meta: {
-    id?:string,
-    status: "bootstrap" | "collect" | "audit"
-    total: number
-  }
-  audit?: AuditType
+    id?: string;
+    status: "bootstrap" | "collect" | "audit";
+    total: number;
+  };
+  audit?: AuditType;
 }

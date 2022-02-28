@@ -106,7 +106,9 @@ class Commander {
     const runAuditsMap = new Map<string, Array<typeof Collect>>();
 
     const getCollector = (collectId: string) =>
-      this._audits.collectors.filter((collect) => collect.meta.id === collectId);
+      this._audits.collectors.filter(
+        (collect) => collect.meta.id === collectId
+      );
 
     this._audits.audits.forEach((audit) => {
       const auditCollectorsIds = audit.meta.collectors;
@@ -158,7 +160,9 @@ class Commander {
       });
       if (filteredCollectInstances.length) {
         const traces = await Promise.allSettled([
-          ...collectInstances.map((c) => c.collect(pageContext, this._settings)),
+          ...collectInstances.map((c) =>
+            c.collect(pageContext, this._settings)
+          ),
         ]);
         debug("parsing traces");
         const parsedTraces = util.parseAllSettledTraces(traces);
@@ -180,8 +184,8 @@ class Commander {
       const pushStream: AuditStreamChunk = {
         meta: {
           ...(this._id ? { id: this._id } : {}),
-          status: 'audit',
-          total: schedulerArray.length
+          status: "audit",
+          total: schedulerArray.length,
         },
         audit: auditResult,
       };

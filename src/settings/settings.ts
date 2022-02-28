@@ -57,7 +57,7 @@ export const DEFAULT: DefaultSettings = {
     streams: false,
     coldRun: true,
     pipeTerminateOnEnd: false,
-    pipe: auditStream
+    pipe: auditStream,
   },
   CATEGORIES: {
     server: {

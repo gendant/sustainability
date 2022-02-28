@@ -74,9 +74,7 @@ export interface ConnectionSettings {
   /**
    * Terminate readable stream once audit has finished. Defaults to false
    */
-  pipeTerminateOnEnd?: boolean
-
-
+  pipeTerminateOnEnd?: boolean;
 }
 
 export interface PrivateSettings {
@@ -88,7 +86,7 @@ export interface PrivateSettings {
   maxThrottle: number;
   streams: boolean;
   pipe?: Readable;
-  pipeTerminateOnEnd?: boolean
+  pipeTerminateOnEnd?: boolean;
   coldRun: boolean;
 }
 

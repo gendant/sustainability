@@ -10,21 +10,18 @@ import { auditStream } from "./stream";
 
 const debug = util.debugGenerator("Sustainability");
 export default class Sustainability {
+  private _settings;
 
-
-  private _settings
-
-  constructor(settings?:AuditSettings){
+  constructor(settings?: AuditSettings) {
     this._settings = settings?.connectionSettings
-    ? { ...DEFAULT.CONNECTION_SETTINGS, ...settings.connectionSettings }
-    : DEFAULT.CONNECTION_SETTINGS;
-
+      ? { ...DEFAULT.CONNECTION_SETTINGS, ...settings.connectionSettings }
+      : DEFAULT.CONNECTION_SETTINGS;
   }
 
   /**
    * A readable stream of audits to pipe from. Used in combination with streams option.
    */
-   public static auditStream = auditStream
+  public static auditStream = auditStream;
 
   /**
    * Main method to start a new test on a given url. Returns a report.
@@ -37,14 +34,13 @@ export default class Sustainability {
     let page: Page;
     let coldRunPage: Page;
     let redirectURL;
-    const comments: string[] = [];  
+    const comments: string[] = [];
     const sustainability = new Sustainability(settings);
-    const isColdRun = sustainability._settings.coldRun
+    const isColdRun = sustainability._settings.coldRun;
 
     try {
-
-      if(sustainability._settings.streams && sustainability._settings.pipe){
-        this.auditStream = sustainability._settings.pipe
+      if (sustainability._settings.streams && sustainability._settings.pipe) {
+        this.auditStream = sustainability._settings.pipe;
       }
 
       browser =
@@ -134,24 +130,17 @@ export default class Sustainability {
     pageContextRaw: PageContext,
     settings?: AuditSettings
   ): Promise<Report> {
-    const isStream = this._settings.streams
+    const isStream = this._settings.streams;
     const startTime = Date.now();
     const { url } = pageContextRaw;
     const page = await Commander.setUp(pageContextRaw, settings);
     const pageContext = { ...pageContextRaw, page };
     const [_, auditResults] = await Promise.allSettled([
-      util.navigate(
-        pageContext,
-        "networkidle0",
-        debug,
-        false,
-        this._settings
-      ),
+      util.navigate(pageContext, "networkidle0", debug, false, this._settings),
       Commander.evaluate(pageContext),
     ]);
 
     page.removeAllListeners();
-
 
     const resultsParsed = util.parseAllSettledAudits(auditResults);
     const audits = util.groupAudits(resultsParsed);
@@ -165,20 +154,19 @@ export default class Sustainability {
     const report = {
       globalScore,
       meta,
-      audits
-    }
+      audits,
+    };
 
     if (isStream) {
-      debug('Streaming report')
-      Sustainability.auditStream.push(JSON.stringify(report))
-    
-      if(this._settings.pipeTerminateOnEnd){
+      debug("Streaming report");
+      Sustainability.auditStream.push(JSON.stringify(report));
+
+      if (this._settings.pipeTerminateOnEnd) {
         Sustainability.auditStream.push(null);
       }
       debug("Done streaming audits");
-
     }
 
-    return report
+    return report;
   }
 }
