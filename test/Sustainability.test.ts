@@ -3,6 +3,7 @@ import fastify, { FastifyInstance } from "fastify";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import * as path from "path";
 import { Browser, Page } from "puppeteer";
+import { Readable } from "stream";
 import { Sustainability } from "../src";
 import Commander from "../src/commander/commander";
 import Connection from "../src/connection/connection";
@@ -64,6 +65,31 @@ describe("Sustainability", () => {
       connectionSettings: { streams: true },
     });
     expect(true).toBeTruthy();
+  });
+
+  it("custom stream pipe work", async () => {
+    const readableStream = new Readable({
+      read(){
+
+      }
+    })
+
+    readableStream.on('data', (data)=> expect(data).toBeTruthy())
+    await runAudit("animations", {
+      id: "0x12221ae",
+      connectionSettings: { streams: true, pipe: readableStream, pipeTerminateOnEnd: true},
+    });
+  });
+
+  it("stream pipe terminates", async () => {
+
+    Sustainability.auditStream.on('end', ()=>{
+      expect(true).toBeTruthy();
+    })
+    await runAudit("animations", {
+      id: "0x12221ae",
+      connectionSettings: { streams: true, pipeTerminateOnEnd: true},
+    });
   });
   it("works when custom browser is passed", async () => {
     const browser = await Connection.setUp();

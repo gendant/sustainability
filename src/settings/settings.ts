@@ -27,6 +27,7 @@ import CollectRobots from "../collect/robots.collect";
 import CollectScreenshot from "../collect/screenshot.collect";
 import CollectSubfont from "../collect/subfont.collect";
 import CollectTransfer from "../collect/transfer.collect";
+import { auditStream } from "../sustainability/stream";
 import { DefaultSettings } from "../types/settings";
 
 export const DEFAULT: DefaultSettings = {
@@ -55,6 +56,8 @@ export const DEFAULT: DefaultSettings = {
     },
     streams: false,
     coldRun: true,
+    pipeTerminateOnEnd: false,
+    pipe: auditStream
   },
   CATEGORIES: {
     server: {

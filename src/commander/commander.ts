@@ -5,9 +5,8 @@ import { Page } from "puppeteer";
 import { Sustainability } from "..";
 import Collect from "../collect/collect";
 import { DEFAULT } from "../settings/settings";
-import { auditStream } from "../sustainability/stream";
 import { AuditSettings, PageContext } from "../types";
-import { AuditType, CollectorsIds } from "../types/audit";
+import { AuditStreamChunk, AuditType, CollectorsIds } from "../types/audit";
 import { PrivateSettings } from "../types/settings";
 import { Traces } from "../types/traces";
 import * as util from "../utils/utils";
@@ -15,9 +14,9 @@ import * as util from "../utils/utils";
 const debug = util.debugGenerator("Commander");
 
 class Commander {
-  private settings = {} as PrivateSettings;
-  private readonly audits = DEFAULT.AUDITS;
-  private id = "";
+  private _settings = {} as PrivateSettings;
+  private readonly _audits = DEFAULT.AUDITS;
+  private _id = "";
 
   async setUp(
     pageContext: PageContext,
@@ -26,24 +25,24 @@ class Commander {
     try {
       debug("Running set up");
       const { page, url } = pageContext;
-      this.settings = settings?.connectionSettings
+      this._settings = settings?.connectionSettings
         ? { ...DEFAULT.CONNECTION_SETTINGS, ...settings.connectionSettings }
         : DEFAULT.CONNECTION_SETTINGS;
 
       if (settings?.id) {
-        this.id = settings.id;
-        debug("Setting comander id to:", this.id);
+        this._id = settings.id;
+        debug("Setting comander id to:", this._id);
       }
 
       // Page.setJavaScriptEnabled(false); Speeds up process drastically
       const pageFeaturesArray = [
-        page.setViewport(this.settings.emulatedDevice.viewport),
-        page.setUserAgent(this.settings.emulatedDevice.userAgent),
+        page.setViewport(this._settings.emulatedDevice.viewport),
+        page.setUserAgent(this._settings.emulatedDevice.userAgent),
         page.browserContext().overridePermissions(url, ["geolocation"]),
         page.setGeolocation({
-          latitude: this.settings.location.latitude,
-          longitude: this.settings.location.longitude,
-          accuracy: this.settings.location.accuracy,
+          latitude: this._settings.location.latitude,
+          longitude: this._settings.location.longitude,
+          accuracy: this._settings.location.accuracy,
         }),
         page.setCacheEnabled(false),
         page.setBypassCSP(true),
@@ -72,7 +71,7 @@ class Commander {
   async evaluate(
     pageContext: PageContext
   ): Promise<PromiseSettledResult<AuditType>[]> {
-    if (this.settings.streams) return this.dynamicEvaluate(pageContext);
+    if (this._settings.streams) return this.dynamicEvaluate(pageContext);
 
     return this.staticEvaluate(pageContext);
   }
@@ -84,15 +83,15 @@ class Commander {
       debug("Static evaluate");
       debug("Runnining collectors");
       const traces = await Promise.allSettled(
-        this.audits.collectors.map((collect) =>
-          collect.collect(pageContext, this.settings)
+        this._audits.collectors.map((collect) =>
+          collect.collect(pageContext, this._settings)
         )
       );
       debug("Finished collectors now parsing the traces");
       const parsedTraces = util.parseAllSettledTraces(traces);
       debug("Running audits");
       return Promise.allSettled(
-        this.audits.audits.map((audit) => audit.audit(parsedTraces))
+        this._audits.audits.map((audit) => audit.audit(parsedTraces))
       );
     } catch (error) {
       throw new Error(`Error: Commander failed with ${error}`);
@@ -107,9 +106,9 @@ class Commander {
     const runAuditsMap = new Map<string, Array<typeof Collect>>();
 
     const getCollector = (collectId: string) =>
-      this.audits.collectors.filter((collect) => collect.meta.id === collectId);
+      this._audits.collectors.filter((collect) => collect.meta.id === collectId);
 
-    this.audits.audits.forEach((audit) => {
+    this._audits.audits.forEach((audit) => {
       const auditCollectorsIds = audit.meta.collectors;
       auditCollectorsIds.forEach((collectorId: string) => {
         const collectorsArray = runAuditsMap.get(audit.meta.id);
@@ -142,8 +141,8 @@ class Commander {
     const globalEventEmitter = new EventEmitter();
     globalEventEmitter.setMaxListeners(20);
     const getAudit = (auditId: string) =>
-      this.audits.audits.filter((audit) => audit.meta.id === auditId);
-    return schedulerArray.map(async (scheduled) => {
+      this._audits.audits.filter((audit) => audit.meta.id === auditId);
+    return schedulerArray.map(async (scheduled, i) => {
       const collectInstances = scheduled[1];
       const auditInstance = getAudit(scheduled[0])[0];
       const filteredCollectInstances = collectInstances.filter((collect) => {
@@ -159,7 +158,7 @@ class Commander {
       });
       if (filteredCollectInstances.length) {
         const traces = await Promise.allSettled([
-          ...collectInstances.map((c) => c.collect(pageContext, this.settings)),
+          ...collectInstances.map((c) => c.collect(pageContext, this._settings)),
         ]);
         debug("parsing traces");
         const parsedTraces = util.parseAllSettledTraces(traces);
@@ -178,10 +177,15 @@ class Commander {
       }
 
       const auditResult = await auditInstance.audit(globalTraces);
-      const pushStream = {
-        ...auditResult,
-        ...(this.id ? { id: this.id } : {}),
+      const pushStream: AuditStreamChunk = {
+        meta: {
+          ...(this._id ? { id: this._id } : {}),
+          status: 'audit',
+          total: schedulerArray.length
+        },
+        audit: auditResult,
       };
+
       debug(`Streaming ${auditInstance.meta.id} audit`);
       Sustainability.auditStream.push(JSON.stringify(pushStream));
 

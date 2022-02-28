@@ -1,5 +1,12 @@
 # Changelog
 
+## v. 0.5.4 (28/2/2022)
+
+**New features**
+
+- pipe option in connectionSettings
+- pipeTerminateOnEnd in connectionSettings
+
 ## v. 0.5.2 (23/2/2022)
 
 - New feature: id in settings

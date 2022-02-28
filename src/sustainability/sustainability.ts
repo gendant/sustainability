@@ -1,4 +1,5 @@
 import { Browser, LaunchOptions, Page } from "puppeteer";
+import { Readable } from "stream";
 import Commander from "../commander/commander";
 import Connection from "../connection/connection";
 import { DEFAULT } from "../settings/settings";
@@ -9,10 +10,22 @@ import { auditStream } from "./stream";
 
 const debug = util.debugGenerator("Sustainability");
 export default class Sustainability {
+
+
+  private _settings
+
+  constructor(settings?:AuditSettings){
+    this._settings = settings?.connectionSettings
+    ? { ...DEFAULT.CONNECTION_SETTINGS, ...settings.connectionSettings }
+    : DEFAULT.CONNECTION_SETTINGS;
+
+  }
+
   /**
    * A readable stream of audits to pipe from. Used in combination with streams option.
    */
-  public static auditStream = auditStream;
+   public static auditStream = auditStream
+
   /**
    * Main method to start a new test on a given url. Returns a report.
    */
@@ -24,22 +37,25 @@ export default class Sustainability {
     let page: Page;
     let coldRunPage: Page;
     let redirectURL;
-    const comments: string[] = [];
-    const isColdRun =
-      settings?.connectionSettings?.coldRun ??
-      DEFAULT.CONNECTION_SETTINGS.coldRun;
-    const sustainability = new Sustainability();
+    const comments: string[] = [];  
+    const sustainability = new Sustainability(settings);
+    const isColdRun = sustainability._settings.coldRun
 
     try {
+
+      if(sustainability._settings.streams && sustainability._settings.pipe){
+        this.auditStream = sustainability._settings.pipe
+      }
+
       browser =
         settings?.browser ??
-        (await sustainability.startNewConnectionAndReturnBrowser(
+        (await sustainability._startNewConnectionAndReturnBrowser(
           settings?.launchSettings
         ));
 
       if (isColdRun) {
         coldRunPage = await browser.newPage();
-        redirectURL = await sustainability.spawnColdRun(coldRunPage, url);
+        redirectURL = await sustainability._spawnColdRun(coldRunPage, url);
       }
 
       if (redirectURL) {
@@ -53,7 +69,7 @@ export default class Sustainability {
       let report = {} as Report;
       try {
         const pageContext = { page, url };
-        report = await sustainability.handler(pageContext, settings);
+        report = await sustainability._handler(pageContext, settings);
         if (comments.length) report.comments = comments;
         return report;
       } catch (error) {
@@ -75,14 +91,14 @@ export default class Sustainability {
     }
   }
 
-  private async startNewConnectionAndReturnBrowser(
+  private async _startNewConnectionAndReturnBrowser(
     settings?: LaunchOptions
   ): Promise<Browser> {
     const browser = await Connection.setUp(settings);
     return browser;
   }
 
-  private async spawnColdRun(
+  private async _spawnColdRun(
     coldRunPage: Page,
     url: string
   ): Promise<string | undefined> {
@@ -114,10 +130,11 @@ export default class Sustainability {
     return redirectURL;
   }
 
-  private async handler(
+  private async _handler(
     pageContextRaw: PageContext,
     settings?: AuditSettings
   ): Promise<Report> {
+    const isStream = this._settings.streams
     const startTime = Date.now();
     const { url } = pageContextRaw;
     const page = await Commander.setUp(pageContextRaw, settings);
@@ -128,16 +145,13 @@ export default class Sustainability {
         "networkidle0",
         debug,
         false,
-        settings?.connectionSettings
+        this._settings
       ),
       Commander.evaluate(pageContext),
     ]);
 
     page.removeAllListeners();
-    if (settings?.connectionSettings?.streams) {
-      debug("Done streaming audits");
-      Sustainability.auditStream.push(null);
-    }
+
 
     const resultsParsed = util.parseAllSettledAudits(auditResults);
     const audits = util.groupAudits(resultsParsed);
@@ -147,10 +161,24 @@ export default class Sustainability {
       url,
       timing: [new Date(startTime).toISOString(), Date.now() - startTime],
     };
-    return {
+
+    const report = {
       globalScore,
       meta,
-      audits,
-    };
+      audits
+    }
+
+    if (isStream) {
+      debug('Streaming report')
+      Sustainability.auditStream.push(JSON.stringify(report))
+    
+      if(this._settings.pipeTerminateOnEnd){
+        Sustainability.auditStream.push(null);
+      }
+      debug("Done streaming audits");
+
+    }
+
+    return report
   }
 }

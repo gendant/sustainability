@@ -4,6 +4,7 @@ import {
   LaunchOptions,
   Product,
 } from "puppeteer";
+import { Readable } from "stream";
 import Audit from "../audits/audit";
 import Collect from "../collect/collect";
 
@@ -57,13 +58,25 @@ export interface ConnectionSettings {
 	 */
   location?: EmulatedLocation;
   /**
+   * Should initialise a cold run to find any potential URL redirect. Defaults to true
+   */
+  coldRun?: boolean;
+
+  /**
    * Should push individual audits results as they go. Defaults to false
    */
   streams?: boolean;
   /**
-   * Should initialise a cold run to find any potential URL redirect. Defaults to true
+   * A readable stream of audits to pipe from. Used in combination with streams option.
    */
-  coldRun?: boolean;
+  pipe?: Readable;
+
+  /**
+   * Terminate readable stream once audit has finished. Defaults to false
+   */
+  pipeTerminateOnEnd?: boolean
+
+
 }
 
 export interface PrivateSettings {
@@ -74,6 +87,8 @@ export interface PrivateSettings {
   location: EmulatedLocation;
   maxThrottle: number;
   streams: boolean;
+  pipe?: Readable;
+  pipeTerminateOnEnd?: boolean
   coldRun: boolean;
 }
 
