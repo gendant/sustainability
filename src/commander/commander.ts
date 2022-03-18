@@ -158,18 +158,21 @@ class Commander {
 
         return false;
       });
+
+      console.log(`${auditInstance.meta.id} filtered INSTANCES`, filteredCollectInstances)
       if (filteredCollectInstances.length) {
         const traces = await Promise.allSettled([
-          ...collectInstances.map((c) =>
+          ...filteredCollectInstances.map((c) =>
             c.collect(pageContext, this._settings)
           ),
         ]);
         debug("parsing traces");
         const parsedTraces = util.parseAllSettledTraces(traces);
         globalTraces = { ...globalTraces, ...parsedTraces };
-        collectInstances.forEach((collect) =>
+        filteredCollectInstances.forEach((collect) =>
           globalEventEmitter.emit(collect.meta.id)
         );
+
       } else {
         const promiseArray = collectInstances.map((collect) => {
           debug(
@@ -191,7 +194,7 @@ class Commander {
       };
 
       debug(`Streaming ${auditInstance.meta.id} audit`);
-      Sustainability.auditStream.push(JSON.stringify(pushStream));
+      this._settings.pipe?.push(JSON.stringify(pushStream));
 
       return auditResult;
     });

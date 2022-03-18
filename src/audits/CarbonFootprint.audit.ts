@@ -80,7 +80,6 @@ export default class CarbonFootprintAudit extends Audit {
 				*/
       //};
 
-      debug("evaluating energy source");
       const records = await getValidRecords();
       debug("evaluating total page weight");
       const totalTransfersize = sum(

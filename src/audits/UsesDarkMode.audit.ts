@@ -1,4 +1,4 @@
-import { Meta, Result } from "../types/audit";
+import { Meta, Result, SkipResult } from "../types/audit";
 import { Traces } from "../types/traces";
 import * as util from "../utils/utils";
 import Audit from "./audit";
@@ -21,8 +21,9 @@ export default class UsesDarkModeAudit extends Audit {
    *  If they match (string comparaisson) dark mode is unavailable and so the audit fails.
    *
    */
-  static async audit(traces: Traces): Promise<Result> {
+  static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesDarkMode Audit");
+    try{
     debug("running");
     const score = Number(traces.screenshot.hasDarkMode);
     const meta = util.successOrFailureMeta(UsesDarkModeAudit.meta, score);
@@ -33,5 +34,13 @@ export default class UsesDarkModeAudit extends Audit {
       score,
       scoreDisplayMode: "binary",
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(UsesDarkModeAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
+    
   }
 }

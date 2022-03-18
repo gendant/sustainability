@@ -4,18 +4,23 @@ import Commander from "../commander/commander";
 import Connection from "../connection/connection";
 import { DEFAULT } from "../settings/settings";
 import { AuditSettings, PageContext } from "../types";
-import { Report } from "../types/audit";
+import { AuditStreamChunk, Report } from "../types/audit";
 import * as util from "../utils/utils";
 import { auditStream } from "./stream";
 
 const debug = util.debugGenerator("Sustainability");
 export default class Sustainability {
   private _settings;
+  private _id;
 
   constructor(settings?: AuditSettings) {
     this._settings = settings?.connectionSettings
       ? { ...DEFAULT.CONNECTION_SETTINGS, ...settings.connectionSettings }
       : DEFAULT.CONNECTION_SETTINGS;
+    
+      if (settings?.id) {
+        this._id = settings.id;
+      }
   }
 
   /**
@@ -39,9 +44,6 @@ export default class Sustainability {
     const isColdRun = sustainability._settings.coldRun;
 
     try {
-      if (sustainability._settings.streams && sustainability._settings.pipe) {
-        this.auditStream = sustainability._settings.pipe;
-      }
 
       browser =
         settings?.browser ??
@@ -151,7 +153,7 @@ export default class Sustainability {
       timing: [new Date(startTime).toISOString(), Date.now() - startTime],
     };
 
-    const report = {
+    const report: Report = {
       globalScore,
       meta,
       audits,
@@ -159,10 +161,17 @@ export default class Sustainability {
 
     if (isStream) {
       debug("Streaming report");
-      Sustainability.auditStream.push(JSON.stringify(report));
+      const pushStream: AuditStreamChunk = {
+        meta: {
+          ...(this._id ? { id: this._id } : {}),
+          status: "done",
+        },
+        audit: report,
+      };
+      this._settings.pipe?.push(JSON.stringify(pushStream));
 
       if (this._settings.pipeTerminateOnEnd) {
-        Sustainability.auditStream.push(null);
+        this._settings.pipe?.push(null);
       }
       debug("Done streaming audits");
     }

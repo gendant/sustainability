@@ -1,4 +1,4 @@
-import { Meta, Result } from "../types/audit";
+import { Meta, Result, SkipResult } from "../types/audit";
 import { Traces } from "../types/traces";
 import * as util from "../utils/utils";
 import Audit from "./audit";
@@ -22,8 +22,9 @@ export default class PixelEnergyEfficiencyAudit extends Audit {
    * 	Get screenshot data and calculate the average RGB pixel ratio.
    *
    */
-  static async audit(traces: Traces): Promise<Result> {
+  static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("PixelEnergyEfficiency Audit");
+    try{
     debug("running");
     const pixelPower = traces.screenshot.power;
     const score = Number(pixelPower <= PIXEL_POWER_THRESHOLD);
@@ -43,5 +44,12 @@ export default class PixelEnergyEfficiencyAudit extends Audit {
         },
       },
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(PixelEnergyEfficiencyAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }

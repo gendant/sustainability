@@ -19,7 +19,7 @@ export default class CookieOptimisation extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("CookieOptimisation Audit");
-    debug("running");
+    try{
 
     const isAuditApplicable = (): boolean => {
       if (!traces.cookies?.length) return false;
@@ -35,6 +35,7 @@ export default class CookieOptimisation extends Audit {
     };
 
     if (isAuditApplicable()) {
+      debug("running");
       traces.cookies.filter((c) => {
         if (!hosts.includes(c.domain)) return false;
         if (bigCookies.has(c.name)) return false;
@@ -90,5 +91,12 @@ export default class CookieOptimisation extends Audit {
       meta: util.skipMeta(CookieOptimisation.meta),
       scoreDisplayMode: "skip",
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(CookieOptimisation.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }

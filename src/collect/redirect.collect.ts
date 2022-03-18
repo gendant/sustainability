@@ -43,7 +43,6 @@ export default class CollectRedirect extends Collect {
       }
     });
     const getEnergySource = async () => {
-      debug("evaluating energy source");
       const response = await util.isGreenServerMem(initialHost);
 
       if (response && !response.error) {
@@ -83,6 +82,7 @@ export default class CollectRedirect extends Collect {
         debug
       );
       const hosts = getPageHosts();
+      debug("evaluating energy source");
       const energySource = await getEnergySource();
       debug("done");
       return {

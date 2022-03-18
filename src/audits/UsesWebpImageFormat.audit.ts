@@ -26,7 +26,7 @@ export default class UsesWebpImageFormatAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesWebPImageFormat Audit");
-
+    try{
     const mediaImages = [
       ...(traces.lazyMedia ? [traces.lazyMedia.lazyImages] : []).flat(),
       ...traces.record
@@ -84,5 +84,12 @@ export default class UsesWebpImageFormatAudit extends Audit {
       meta: util.skipMeta(UsesWebpImageFormatAudit.meta),
       scoreDisplayMode: "skip",
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(UsesWebpImageFormatAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }

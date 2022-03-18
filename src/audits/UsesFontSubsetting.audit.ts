@@ -31,6 +31,7 @@ export default class UsesFontSubsettingAudit extends Audit {
    */
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesFontSubsetting Audit");
+    try{
     const allCssSheets = [...traces.css.sheets, ...traces.css.info.styles];
     const isAuditApplicable = (): boolean => {
       if (allCssSheets.length === 0) return false;
@@ -46,7 +47,7 @@ export default class UsesFontSubsettingAudit extends Audit {
     };
 
     if (isAuditApplicable()) {
-      debug("running");
+      debug('running')
       const fonts: Array<{ fontName: string; hasSubset: boolean }> = [];
       allCssSheets.map((sheet) => {
         const ast = csstree.parse(sheet.text);
@@ -125,5 +126,12 @@ export default class UsesFontSubsettingAudit extends Audit {
       meta: util.skipMeta(UsesFontSubsettingAudit.meta),
       scoreDisplayMode: "skip",
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(UsesFontSubsettingAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }

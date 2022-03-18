@@ -1,5 +1,5 @@
 import { DEFAULT } from "../settings/settings";
-import { Meta, Result } from "../types/audit";
+import { Meta, Result, SkipMeta, SkipResult } from "../types/audit";
 import { Traces } from "../types/traces";
 import * as util from "../utils/utils";
 import Audit from "./audit";
@@ -25,8 +25,9 @@ export default class LeverageBrowserCachingAudit extends Audit {
     } as Meta;
   }
 
-  static async audit(traces: Traces): Promise<Result> {
+  static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("LeverageBrowserCaching Audit");
+    try{
     debug("running");
     const results: any = [];
     let totalWastedBytes = 0;
@@ -102,5 +103,12 @@ export default class LeverageBrowserCachingAudit extends Audit {
           }
         : {}),
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(LeverageBrowserCachingAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }

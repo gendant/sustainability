@@ -22,7 +22,7 @@ export default class UsesLazyLoadingAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesLazyLoading Audit");
-
+    try{
     const isAuditApplicable = (): boolean => {
       if (!traces.lazyMedia) return false;
       const nonLazyMedia = [...traces.media.images, ...traces.media.videos];
@@ -33,7 +33,7 @@ export default class UsesLazyLoadingAudit extends Audit {
     };
 
     if (isAuditApplicable()) {
-      debug("running");
+      debug('running')
       const lazyMedia = [
         ...traces.lazyMedia.lazyImages,
         ...traces.lazyMedia.lazyVideos,
@@ -55,5 +55,12 @@ export default class UsesLazyLoadingAudit extends Audit {
       meta: util.skipMeta(UsesLazyLoadingAudit.meta),
       scoreDisplayMode: "skip",
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(UsesLazyLoadingAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }

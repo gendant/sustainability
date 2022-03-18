@@ -1,6 +1,6 @@
 import { Meta, Result, SkipResult } from "../types/audit";
 import { Traces } from "../types/traces";
-import * as utils from "../utils/utils";
+import * as util from "../utils/utils";
 import Audit from "./audit";
 
 export default class ReactiveAnimationsAudit extends Audit {
@@ -16,8 +16,8 @@ export default class ReactiveAnimationsAudit extends Audit {
   }
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
-    const debug = utils.debugGenerator("SmartAnimations Audit");
-    debug("running");
+    const debug = util.debugGenerator("SmartAnimations Audit");
+    try{
 
     const isAuditApplicable = (): boolean => {
       if (!traces.animations) return false;
@@ -25,8 +25,9 @@ export default class ReactiveAnimationsAudit extends Audit {
     };
 
     if (isAuditApplicable()) {
+      debug("running");
       const score = Number(traces.animations.notReactive.length === 0);
-      const meta = utils.successOrFailureMeta(
+      const meta = util.successOrFailureMeta(
         ReactiveAnimationsAudit.meta,
         score
       );
@@ -49,8 +50,15 @@ export default class ReactiveAnimationsAudit extends Audit {
     debug("skipping non applicable audit");
 
     return {
-      meta: utils.skipMeta(ReactiveAnimationsAudit.meta),
+      meta: util.skipMeta(ReactiveAnimationsAudit.meta),
       scoreDisplayMode: "skip",
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(ReactiveAnimationsAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }

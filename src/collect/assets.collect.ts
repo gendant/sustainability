@@ -34,8 +34,9 @@ export default class CollectAssets extends Collect {
       const sheets: Sheets[] = [];
       const scripts: Scripts[] = [];
       page.on("requestfinished", async (request: Request) => {
-        const response = request.response()!;
+        const response = request.response();
 
+        if(response){
         const url = response.url();
         const resourceType = response.request().resourceType();
         if (request.redirectChain().length === 0 && response.ok()) {
@@ -58,6 +59,7 @@ export default class CollectAssets extends Collect {
             scripts.push(script);
           }
         }
+      }
       });
 
       await util.safeNavigateTimeout(

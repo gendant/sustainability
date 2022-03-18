@@ -22,6 +22,7 @@ export default class AvoidableBotTrafficAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("AvoidableBotTraffic Audit");
+    try{
     debug("running");
     if (!(traces.robots && Object.keys(traces.robots).length)) {
       return {
@@ -79,5 +80,12 @@ export default class AvoidableBotTrafficAudit extends Audit {
       scoreDisplayMode: "binary",
       ...(errorMessage ? { errorMessage } : {}),
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(AvoidableBotTrafficAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }

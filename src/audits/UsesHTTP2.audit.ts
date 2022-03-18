@@ -1,4 +1,4 @@
-import { Meta, Result } from "../types/audit";
+import { Meta, Result, SkipResult } from "../types/audit";
 import { Traces } from "../types/traces";
 import * as util from "../utils/utils";
 import Audit from "./audit";
@@ -20,8 +20,9 @@ export default class UsesHTTP2Audit extends Audit {
     } as Meta;
   }
 
-  static async audit(traces: Traces): Promise<Result> {
+  static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesHTTP2 Audit");
+    try{
     debug("running");
     const { hosts } = traces.server;
     let urlCounter = 0;
@@ -43,5 +44,12 @@ export default class UsesHTTP2Audit extends Audit {
       score,
       scoreDisplayMode: "binary",
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(UsesHTTP2Audit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }

@@ -18,6 +18,7 @@ export default class UsesWebmVideoFormatAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesWebMVideoFormat Audit");
+    try{
     // @ts-ignore flatMap
     let mediaVideos: Array<string[]> = traces.media.videos
       .filter((v) => (v.src as string).length)
@@ -28,7 +29,7 @@ export default class UsesWebmVideoFormatAudit extends Audit {
     };
 
     if (isAuditApplicable()) {
-      debug("running");
+      debug('running')
       const auditUrls = new Set<string>();
 
       if (traces.lazyMedia.lazyVideos.length) {
@@ -68,5 +69,12 @@ export default class UsesWebmVideoFormatAudit extends Audit {
       meta: util.skipMeta(UsesWebmVideoFormatAudit.meta),
       scoreDisplayMode: "skip",
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(UsesWebmVideoFormatAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }

@@ -1,4 +1,4 @@
-import { Meta, Result } from "../types/audit";
+import { Meta, Result, SkipResult } from "../types/audit";
 import { Traces } from "../types/traces";
 import * as util from "../utils/utils";
 import Audit from "./audit";
@@ -49,8 +49,9 @@ export default class UsesCompressionAudit extends Audit {
     } as Meta;
   }
 
-  static async audit(traces: Traces): Promise<Result> {
+  static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesCompression Audit");
+    try{
     debug("running");
     const auditUrls = new Set();
 
@@ -133,5 +134,12 @@ export default class UsesCompressionAudit extends Audit {
         : {}),
       ...(errorMessage ? { errorMessage } : {}),
     };
+  } catch (error) {
+    debug(`Failed with error: ${error}`);
+    return {
+      meta: util.skipMeta(UsesCompressionAudit.meta),
+      scoreDisplayMode: "skip",
+    };
+  }
   }
 }
