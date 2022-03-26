@@ -22,45 +22,48 @@ export default class UsesLazyLoadingAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesLazyLoading Audit");
-    try{
-    const isAuditApplicable = (): boolean => {
-      if (!traces.lazyMedia) return false;
-      const nonLazyMedia = [...traces.media.images, ...traces.media.videos];
-      if (!nonLazyMedia.length) return false;
-      if (!nonLazyMedia.some((media) => !media.isVisible)) return false;
+    try {
+      const isAuditApplicable = (): boolean => {
+        if (!traces.lazyMedia) return false;
+        const nonLazyMedia = [...traces.media.images, ...traces.media.videos];
+        if (!nonLazyMedia.length) return false;
+        if (!nonLazyMedia.some((media) => !media.isVisible)) return false;
 
-      return true;
-    };
+        return true;
+      };
 
-    if (isAuditApplicable()) {
-      debug('running')
-      const lazyMedia = [
-        ...traces.lazyMedia.lazyImages,
-        ...traces.lazyMedia.lazyVideos,
-      ];
-      const score = Number(lazyMedia.length > 0);
-      const meta = util.successOrFailureMeta(UsesLazyLoadingAudit.meta, score);
-      debug("done");
+      if (isAuditApplicable()) {
+        debug("running");
+        const lazyMedia = [
+          ...traces.lazyMedia.lazyImages,
+          ...traces.lazyMedia.lazyVideos,
+        ];
+        const score = Number(lazyMedia.length > 0);
+        const meta = util.successOrFailureMeta(
+          UsesLazyLoadingAudit.meta,
+          score
+        );
+        debug("done");
+
+        return {
+          meta,
+          score,
+          scoreDisplayMode: "binary",
+        };
+      }
+
+      debug("skipping non applicable audit");
 
       return {
-        meta,
-        score,
-        scoreDisplayMode: "binary",
+        meta: util.skipMeta(UsesLazyLoadingAudit.meta),
+        scoreDisplayMode: "skip",
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(UsesLazyLoadingAudit.meta),
+        scoreDisplayMode: "skip",
       };
     }
-
-    debug("skipping non applicable audit");
-
-    return {
-      meta: util.skipMeta(UsesLazyLoadingAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(UsesLazyLoadingAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
   }
 }

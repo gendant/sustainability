@@ -18,63 +18,63 @@ export default class UsesWebmVideoFormatAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesWebMVideoFormat Audit");
-    try{
-    // @ts-ignore flatMap
-    let mediaVideos: Array<string[]> = traces.media.videos
-      .filter((v) => (v.src as string).length)
-      .map((v) => v.src);
-    const isAuditApplicable = (): boolean => {
-      if (!mediaVideos.length) return false;
-      return true;
-    };
+    try {
+      // @ts-ignore flatMap
+      let mediaVideos: Array<string[]> = traces.media.videos
+        .filter((v) => (v.src as string).length)
+        .map((v) => v.src);
+      const isAuditApplicable = (): boolean => {
+        if (!mediaVideos.length) return false;
+        return true;
+      };
 
-    if (isAuditApplicable()) {
-      debug('running')
-      const auditUrls = new Set<string>();
+      if (isAuditApplicable()) {
+        debug("running");
+        const auditUrls = new Set<string>();
 
-      if (traces.lazyMedia.lazyVideos.length) {
-        mediaVideos = [...mediaVideos, traces.lazyMedia.lazyVideos];
+        if (traces.lazyMedia.lazyVideos.length) {
+          mediaVideos = [...mediaVideos, traces.lazyMedia.lazyVideos];
+        }
+
+        mediaVideos.filter((urls) => {
+          if (urls.some((url) => url.endsWith(".webm"))) return false;
+          const urlLastSegment = util.getUrlLastSegment(urls[0]);
+          auditUrls.add(urlLastSegment);
+          return true;
+        });
+
+        const score = Number(auditUrls.size === 0);
+        const meta = util.successOrFailureMeta(
+          UsesWebmVideoFormatAudit.meta,
+          score
+        );
+        debug("done");
+        return {
+          meta,
+          score,
+          scoreDisplayMode: "binary",
+          ...(auditUrls.size > 0
+            ? {
+                extendedInfo: {
+                  value: Array.from(auditUrls.values()),
+                },
+              }
+            : {}),
+        };
       }
 
-      mediaVideos.filter((urls) => {
-        if (urls.some((url) => url.endsWith(".webm"))) return false;
-        const urlLastSegment = util.getUrlLastSegment(urls[0]);
-        auditUrls.add(urlLastSegment);
-        return true;
-      });
+      debug("skipping non applicable audit");
 
-      const score = Number(auditUrls.size === 0);
-      const meta = util.successOrFailureMeta(
-        UsesWebmVideoFormatAudit.meta,
-        score
-      );
-      debug("done");
       return {
-        meta,
-        score,
-        scoreDisplayMode: "binary",
-        ...(auditUrls.size > 0
-          ? {
-              extendedInfo: {
-                value: Array.from(auditUrls.values()),
-              },
-            }
-          : {}),
+        meta: util.skipMeta(UsesWebmVideoFormatAudit.meta),
+        scoreDisplayMode: "skip",
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(UsesWebmVideoFormatAudit.meta),
+        scoreDisplayMode: "skip",
       };
     }
-
-    debug("skipping non applicable audit");
-
-    return {
-      meta: util.skipMeta(UsesWebmVideoFormatAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(UsesWebmVideoFormatAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
   }
 }

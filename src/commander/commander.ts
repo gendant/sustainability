@@ -17,6 +17,8 @@ class Commander {
   private _settings = {} as PrivateSettings;
   private readonly _audits = DEFAULT.AUDITS;
   private _id = "";
+  private _globalEventEmitter = new EventEmitter();
+  private _globalTraces = {} as Traces;
 
   async setUp(
     pageContext: PageContext,
@@ -32,6 +34,15 @@ class Commander {
       if (settings?.id) {
         this._id = settings.id;
         debug("Setting comander id to:", this._id);
+      }
+
+      if (this._settings.streams) {
+        this._globalEventEmitter.setMaxListeners(
+          DEFAULT.AUDITS.audits.reduce(
+            (a, b) => a + b.meta.collectors.length,
+            0
+          )
+        );
       }
 
       // Page.setJavaScriptEnabled(false); Speeds up process drastically
@@ -101,8 +112,7 @@ class Commander {
   async dynamicEvaluate(
     pageContext: PageContext
   ): Promise<PromiseSettledResult<AuditType>[]> {
-    debug("Dynamic evaluate");
-    debug("Scheduling collectors");
+    debug("Dynamic evaluate. Scheduling collectors");
     const runAuditsMap = new Map<string, Array<typeof Collect>>();
 
     const getCollector = (collectId: string) =>
@@ -126,25 +136,23 @@ class Commander {
       });
     });
     const schedulerArray = [...runAuditsMap.entries()];
-    const auditResults = await this.getAuditResults(
-      schedulerArray,
-      pageContext
-    );
+    const auditResults = await Promise.all([
+      this.getAuditResults(schedulerArray, pageContext),
+      this.runQueue(schedulerArray, pageContext),
+    ]);
 
-    return Promise.allSettled(auditResults);
+    return Promise.allSettled(auditResults[0]);
   }
 
-  private async getAuditResults(
+  private async runQueue(
     schedulerArray: Array<[string, Array<typeof Collect>]>,
     pageContext: PageContext
   ) {
     const alreadyInstancedCollects = new Set<CollectorsIds>();
-    let globalTraces = {} as Traces;
-    const globalEventEmitter = new EventEmitter();
-    globalEventEmitter.setMaxListeners(20);
+
     const getAudit = (auditId: string) =>
       this._audits.audits.filter((audit) => audit.meta.id === auditId);
-    return schedulerArray.map(async (scheduled, i) => {
+    schedulerArray.map(async (scheduled, i) => {
       const collectInstances = scheduled[1];
       const auditInstance = getAudit(scheduled[0])[0];
       const filteredCollectInstances = collectInstances.filter((collect) => {
@@ -159,31 +167,44 @@ class Commander {
         return false;
       });
 
-      console.log(`${auditInstance.meta.id} filtered INSTANCES`, filteredCollectInstances)
       if (filteredCollectInstances.length) {
         const traces = await Promise.allSettled([
-          ...filteredCollectInstances.map((c) =>
-            c.collect(pageContext, this._settings)
+          ...filteredCollectInstances.map(
+            async (c) => await c.collect(pageContext, this._settings)
           ),
         ]);
-        debug("parsing traces");
+
+        debug(`parsing traces for ${auditInstance.meta.id}`);
         const parsedTraces = util.parseAllSettledTraces(traces);
-        globalTraces = { ...globalTraces, ...parsedTraces };
+        this._globalTraces = { ...this._globalTraces, ...parsedTraces };
+
         filteredCollectInstances.forEach((collect) =>
-          globalEventEmitter.emit(collect.meta.id)
+          this._globalEventEmitter.emit(collect.meta.id)
         );
-
-      } else {
-        const promiseArray = collectInstances.map((collect) => {
-          debug(
-            `${auditInstance.meta.id} is waiting for ${collect.meta.id} to resolve`
-          );
-          return once(globalEventEmitter, collect.meta.id);
-        });
-        await Promise.all(promiseArray);
       }
+    });
+  }
 
-      const auditResult = await auditInstance.audit(globalTraces);
+  private async getAuditResults(
+    schedulerArray: Array<[string, Array<typeof Collect>]>,
+    pageContext: PageContext
+  ) {
+    const getAudit = (auditId: string) =>
+      this._audits.audits.filter((audit) => audit.meta.id === auditId);
+
+    return schedulerArray.map(async (scheduled, i) => {
+      const collectInstances = scheduled[1];
+      const auditInstance = getAudit(scheduled[0])[0];
+
+      const promiseArray = collectInstances.map((collect) => {
+        debug(
+          `${auditInstance.meta.id} is waiting for ${collect.meta.id} to resolve`
+        );
+        return once(this._globalEventEmitter, collect.meta.id);
+      });
+      await Promise.all(promiseArray);
+
+      const auditResult = await auditInstance.audit(this._globalTraces);
       const pushStream: AuditStreamChunk = {
         meta: {
           ...(this._id ? { id: this._id } : {}),

@@ -36,30 +36,30 @@ export default class CollectAssets extends Collect {
       page.on("requestfinished", async (request: Request) => {
         const response = request.response();
 
-        if(response){
-        const url = response.url();
-        const resourceType = response.request().resourceType();
-        if (request.redirectChain().length === 0 && response.ok()) {
-          if (resourceType === "stylesheet") {
-            const text = await response.text();
-            const stylesheet = {
-              url,
-              text,
-            };
+        if (response) {
+          const url = response.url();
+          const resourceType = response.request().resourceType();
+          if (request.redirectChain().length === 0 && response.ok()) {
+            if (resourceType === "stylesheet") {
+              const text = await response.text();
+              const stylesheet = {
+                url,
+                text,
+              };
 
-            sheets.push(stylesheet);
-          }
+              sheets.push(stylesheet);
+            }
 
-          if (resourceType === "script") {
-            const text = await response.text();
-            const script = {
-              url,
-              text,
-            };
-            scripts.push(script);
+            if (resourceType === "script") {
+              const text = await response.text();
+              const script = {
+                url,
+                text,
+              };
+              scripts.push(script);
+            }
           }
         }
-      }
       });
 
       await util.safeNavigateTimeout(

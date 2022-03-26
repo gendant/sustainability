@@ -51,95 +51,95 @@ export default class UsesCompressionAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesCompression Audit");
-    try{
-    debug("running");
-    const auditUrls = new Set();
+    try {
+      debug("running");
+      const auditUrls = new Set();
 
-    // NOTE: js files considered secure (with identifiable content on HTTPS, e.g personal cookies )
-    // should not be compressed (to avoid CRIME & BREACH attacks)
-    let errorMessage: string | undefined;
-    const { hosts } = traces.server;
-    let justOneTime = true;
-    const resources = traces.record
-      .filter((record) => {
-        const compressedSize = record.CDP.compressedSize.value;
-        const originalSize = record.response.uncompressedSize.value;
-        const gzipSize = record.response.gzipSize.value;
-        const gzipSavings = originalSize - gzipSize;
+      // NOTE: js files considered secure (with identifiable content on HTTPS, e.g personal cookies )
+      // should not be compressed (to avoid CRIME & BREACH attacks)
+      let errorMessage: string | undefined;
+      const { hosts } = traces.server;
+      let justOneTime = true;
+      const resources = traces.record
+        .filter((record) => {
+          const compressedSize = record.CDP.compressedSize.value;
+          const originalSize = record.response.uncompressedSize.value;
+          const gzipSize = record.response.gzipSize.value;
+          const gzipSavings = originalSize - gzipSize;
 
-        if (gzipSize === 0) return false;
-        if (
-          !APPLICABLE_COMPRESSION_MIME_TYPES.includes(
-            record.response.headers["content-type"]
+          if (gzipSize === 0) return false;
+          if (
+            !APPLICABLE_COMPRESSION_MIME_TYPES.includes(
+              record.response.headers["content-type"]
+            )
           )
-        )
-          return false;
-        if (
-          gzipSavings <= IGNORE_THRESHOLD_BYTES ||
-          1 - compressedSize / originalSize > IGNORE_THRESHOLD_PERCENT ||
-          compressedSize < gzipSize
-        )
-          return false;
+            return false;
+          if (
+            gzipSavings <= IGNORE_THRESHOLD_BYTES ||
+            1 - compressedSize / originalSize > IGNORE_THRESHOLD_PERCENT ||
+            compressedSize < gzipSize
+          )
+            return false;
 
-        const recordUrl = record.request.url;
-        if (!hosts.includes(recordUrl.hostname)) return false;
+          const recordUrl = record.request.url;
+          if (!hosts.includes(recordUrl.hostname)) return false;
 
-        return true;
-      })
-      .map((record) => {
-        const isNginx = () => {
-          if (record.response.headers.server) {
-            const server = record.response.headers.server;
-            return server.toUpperCase().includes("NGINX");
+          return true;
+        })
+        .map((record) => {
+          const isNginx = () => {
+            if (record.response.headers.server) {
+              const server = record.response.headers.server;
+              return server.toUpperCase().includes("NGINX");
+            }
+
+            return false;
+          };
+
+          const recordUrl = record.request.url;
+
+          if (justOneTime && isNginx()) {
+            errorMessage = `Possible low gzip compression level detected on NGINX server. Please, consider changing it to at least 5. <a href="https://nginx.org/en/docs/http/ngx_http_gzip_module.html">More info`;
+            justOneTime = false;
           }
 
-          return false;
-        };
+          const gzipSize = record.response.gzipSize.value;
+          const gzipSavings = record.response.uncompressedSize.value - gzipSize;
 
-        const recordUrl = record.request.url;
+          return {
+            url: util.getUrlLastSegment(recordUrl.toString()).split("?")[0],
+            resourceType: record.request.resourceType,
+            savings: { value: gzipSavings, units: "bytes" },
+          };
+        })
+        .filter((record) => {
+          if (auditUrls.has(record.url)) return false;
+          auditUrls.add(record.url);
+          return true;
+        });
 
-        if (justOneTime && isNginx()) {
-          errorMessage = `Possible low gzip compression level detected on NGINX server. Please, consider changing it to at least 5. <a href="https://nginx.org/en/docs/http/ngx_http_gzip_module.html">More info`;
-          justOneTime = false;
-        }
-
-        const gzipSize = record.response.gzipSize.value;
-        const gzipSavings = record.response.uncompressedSize.value - gzipSize;
-
-        return {
-          url: util.getUrlLastSegment(recordUrl.toString()).split("?")[0],
-          resourceType: record.request.resourceType,
-          savings: { value: gzipSavings, units: "bytes" },
-        };
-      })
-      .filter((record) => {
-        if (auditUrls.has(record.url)) return false;
-        auditUrls.add(record.url);
-        return true;
-      });
-
-    const score = Number(resources.length === 0);
-    const meta = util.successOrFailureMeta(UsesCompressionAudit.meta, score);
-    debug("done");
-    return {
-      meta,
-      score,
-      scoreDisplayMode: "binary",
-      ...(auditUrls.size > 0
-        ? {
-            extendedInfo: {
-              value: resources,
-            },
-          }
-        : {}),
-      ...(errorMessage ? { errorMessage } : {}),
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(UsesCompressionAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
+      const score = Number(resources.length === 0);
+      const meta = util.successOrFailureMeta(UsesCompressionAudit.meta, score);
+      debug("done");
+      return {
+        meta,
+        score,
+        scoreDisplayMode: "binary",
+        ...(auditUrls.size > 0
+          ? {
+              extendedInfo: {
+                value: resources,
+              },
+            }
+          : {}),
+        ...(errorMessage ? { errorMessage } : {}),
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(UsesCompressionAudit.meta),
+        scoreDisplayMode: "skip",
+      };
+    }
   }
 }

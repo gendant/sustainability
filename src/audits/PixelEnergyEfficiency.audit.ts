@@ -24,32 +24,32 @@ export default class PixelEnergyEfficiencyAudit extends Audit {
    */
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("PixelEnergyEfficiency Audit");
-    try{
-    debug("running");
-    const pixelPower = traces.screenshot.power;
-    const score = Number(pixelPower <= PIXEL_POWER_THRESHOLD);
-    const meta = util.successOrFailureMeta(
-      PixelEnergyEfficiencyAudit.meta,
-      score
-    );
-    debug("done");
+    try {
+      debug("running");
+      const pixelPower = traces.screenshot.power;
+      const score = Number(pixelPower <= PIXEL_POWER_THRESHOLD);
+      const meta = util.successOrFailureMeta(
+        PixelEnergyEfficiencyAudit.meta,
+        score
+      );
+      debug("done");
 
-    return {
-      meta,
-      score,
-      scoreDisplayMode: "binary",
-      extendedInfo: {
-        value: {
-          power: { value: pixelPower.toFixed(2), units: "W" },
+      return {
+        meta,
+        score,
+        scoreDisplayMode: "binary",
+        extendedInfo: {
+          value: {
+            power: { value: pixelPower.toFixed(2), units: "W" },
+          },
         },
-      },
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(PixelEnergyEfficiencyAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(PixelEnergyEfficiencyAudit.meta),
+        scoreDisplayMode: "skip",
+      };
+    }
   }
 }

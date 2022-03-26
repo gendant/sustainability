@@ -31,107 +31,109 @@ export default class UsesFontSubsettingAudit extends Audit {
    */
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesFontSubsetting Audit");
-    try{
-    const allCssSheets = [...traces.css.sheets, ...traces.css.info.styles];
-    const isAuditApplicable = (): boolean => {
-      if (allCssSheets.length === 0) return false;
-      if (!(traces.fonts.length > 0)) return false;
-      if (
-        !traces.record.some(
-          (resource) => resource.request.resourceType === "font"
+    try {
+      const allCssSheets = [...traces.css.sheets, ...traces.css.info.styles];
+      const isAuditApplicable = (): boolean => {
+        if (allCssSheets.length === 0) return false;
+        if (!(traces.fonts.length > 0)) return false;
+        if (
+          !traces.record.some(
+            (resource) => resource.request.resourceType === "font"
+          )
         )
-      )
-        return false;
-
-      return true;
-    };
-
-    if (isAuditApplicable()) {
-      debug('running')
-      const fonts: Array<{ fontName: string; hasSubset: boolean }> = [];
-      allCssSheets.map((sheet) => {
-        const ast = csstree.parse(sheet.text);
-        csstree.walk(ast, {
-          enter(node: any) {
-            if (node.type === "Atrule" && node.name === "font-face") {
-              const hasSubset: boolean = node.block.children.some((ch: any) => {
-                if (ch.property === "unicode-range") {
-                  return true;
-                }
-
-                return false;
-              });
-              let fontName: string | undefined;
-              node.block.children
-                .filter((ch: any) => {
-                  if (ch.property === "font-family") {
-                    return true;
-                  }
-
-                  return false;
-                })
-                .tail?.data.value.children.map((ch: any) => {
-                  const text = ch.value || ch.name;
-                  fontName = util.removeQuotes(text);
-                });
-              if (fontName) {
-                fonts.push({ fontName, hasSubset });
-              }
-            }
-          },
-        });
-      });
-
-      const nonSubsetFonts = fonts.filter((font) => {
-        if (font.hasSubset) {
           return false;
-        }
 
         return true;
-      });
+      };
 
-      let fontSubsets = {} as SubfontFormat[];
-      const score = Number(fonts.length && nonSubsetFonts.length === 0);
-      if (score === 0) {
-        const fontChars = traces.fonts.filter((font) =>
-          nonSubsetFonts
-            .map((subfont) => subfont.fontName.toLocaleLowerCase())
-            .includes(font.name.toLocaleLowerCase())
+      if (isAuditApplicable()) {
+        debug("running");
+        const fonts: Array<{ fontName: string; hasSubset: boolean }> = [];
+        allCssSheets.map((sheet) => {
+          const ast = csstree.parse(sheet.text);
+          csstree.walk(ast, {
+            enter(node: any) {
+              if (node.type === "Atrule" && node.name === "font-face") {
+                const hasSubset: boolean = node.block.children.some(
+                  (ch: any) => {
+                    if (ch.property === "unicode-range") {
+                      return true;
+                    }
+
+                    return false;
+                  }
+                );
+                let fontName: string | undefined;
+                node.block.children
+                  .filter((ch: any) => {
+                    if (ch.property === "font-family") {
+                      return true;
+                    }
+
+                    return false;
+                  })
+                  .tail?.data.value.children.map((ch: any) => {
+                    const text = ch.value || ch.name;
+                    fontName = util.removeQuotes(text);
+                  });
+                if (fontName) {
+                  fonts.push({ fontName, hasSubset });
+                }
+              }
+            },
+          });
+        });
+
+        const nonSubsetFonts = fonts.filter((font) => {
+          if (font.hasSubset) {
+            return false;
+          }
+
+          return true;
+        });
+
+        let fontSubsets = {} as SubfontFormat[];
+        const score = Number(fonts.length && nonSubsetFonts.length === 0);
+        if (score === 0) {
+          const fontChars = traces.fonts.filter((font) =>
+            nonSubsetFonts
+              .map((subfont) => subfont.fontName.toLocaleLowerCase())
+              .includes(font.name.toLocaleLowerCase())
+          );
+          fontSubsets = fontChars.length > 0 ? fontChars : traces.fonts;
+        }
+
+        const meta = util.successOrFailureMeta(
+          UsesFontSubsettingAudit.meta,
+          score
         );
-        fontSubsets = fontChars.length > 0 ? fontChars : traces.fonts;
+        debug("done");
+        return {
+          meta,
+          score,
+          scoreDisplayMode: "binary",
+          ...(Array.from(fontSubsets).length
+            ? {
+                extendedInfo: {
+                  value: Array.from(fontSubsets),
+                },
+              }
+            : {}),
+        };
       }
 
-      const meta = util.successOrFailureMeta(
-        UsesFontSubsettingAudit.meta,
-        score
-      );
-      debug("done");
+      debug("skipping non applicable audit");
+
       return {
-        meta,
-        score,
-        scoreDisplayMode: "binary",
-        ...(Array.from(fontSubsets).length
-          ? {
-              extendedInfo: {
-                value: Array.from(fontSubsets),
-              },
-            }
-          : {}),
+        meta: util.skipMeta(UsesFontSubsettingAudit.meta),
+        scoreDisplayMode: "skip",
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(UsesFontSubsettingAudit.meta),
+        scoreDisplayMode: "skip",
       };
     }
-
-    debug("skipping non applicable audit");
-
-    return {
-      meta: util.skipMeta(UsesFontSubsettingAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(UsesFontSubsettingAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
   }
 }

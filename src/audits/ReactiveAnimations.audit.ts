@@ -17,48 +17,47 @@ export default class ReactiveAnimationsAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("SmartAnimations Audit");
-    try{
+    try {
+      const isAuditApplicable = (): boolean => {
+        if (!traces.animations) return false;
+        return true;
+      };
 
-    const isAuditApplicable = (): boolean => {
-      if (!traces.animations) return false;
-      return true;
-    };
+      if (isAuditApplicable()) {
+        debug("running");
+        const score = Number(traces.animations.notReactive.length === 0);
+        const meta = util.successOrFailureMeta(
+          ReactiveAnimationsAudit.meta,
+          score
+        );
+        debug("done");
 
-    if (isAuditApplicable()) {
-      debug("running");
-      const score = Number(traces.animations.notReactive.length === 0);
-      const meta = util.successOrFailureMeta(
-        ReactiveAnimationsAudit.meta,
-        score
-      );
-      debug("done");
+        return {
+          meta,
+          score,
+          scoreDisplayMode: "binary",
+          ...(score
+            ? {}
+            : {
+                extendedInfo: {
+                  value: traces.animations.notReactive,
+                },
+              }),
+        };
+      }
+
+      debug("skipping non applicable audit");
 
       return {
-        meta,
-        score,
-        scoreDisplayMode: "binary",
-        ...(score
-          ? {}
-          : {
-              extendedInfo: {
-                value: traces.animations.notReactive,
-              },
-            }),
+        meta: util.skipMeta(ReactiveAnimationsAudit.meta),
+        scoreDisplayMode: "skip",
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(ReactiveAnimationsAudit.meta),
+        scoreDisplayMode: "skip",
       };
     }
-
-    debug("skipping non applicable audit");
-
-    return {
-      meta: util.skipMeta(ReactiveAnimationsAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(ReactiveAnimationsAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
   }
 }

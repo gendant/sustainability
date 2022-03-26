@@ -27,88 +27,90 @@ export default class LeverageBrowserCachingAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("LeverageBrowserCaching Audit");
-    try{
-    debug("running");
-    const results: any = [];
-    let totalWastedBytes = 0;
-    const { hosts } = traces.server;
+    try {
+      debug("running");
+      const results: any = [];
+      let totalWastedBytes = 0;
+      const { hosts } = traces.server;
 
-    traces.record.filter((r) => {
-      const recordUrl = r.request.url;
-      const resourceType = r.request.resourceType;
-      if (!hosts.includes(recordUrl.hostname)) return false;
-      if (!util.isCacheableAsset(r)) return false;
-      const responseHeaders = r.response.headers;
-      const cacheControl = parseCacheControl(responseHeaders["cache-control"]);
-      if (util.shouldSkipRecord(responseHeaders, cacheControl)) return false;
+      traces.record.filter((r) => {
+        const recordUrl = r.request.url;
+        const resourceType = r.request.resourceType;
+        if (!hosts.includes(recordUrl.hostname)) return false;
+        if (!util.isCacheableAsset(r)) return false;
+        const responseHeaders = r.response.headers;
+        const cacheControl = parseCacheControl(
+          responseHeaders["cache-control"]
+        );
+        if (util.shouldSkipRecord(responseHeaders, cacheControl)) return false;
 
-      let cacheLifetimeInSecs = util.computeCacheLifetimeInSeconds(
-        responseHeaders,
-        cacheControl
-      );
+        let cacheLifetimeInSecs = util.computeCacheLifetimeInSeconds(
+          responseHeaders,
+          cacheControl
+        );
 
-      if (
-        cacheLifetimeInSecs !== null &&
-        (!Number.isFinite(cacheLifetimeInSecs) || cacheLifetimeInSecs <= 0)
-      )
-        return false;
+        if (
+          cacheLifetimeInSecs !== null &&
+          (!Number.isFinite(cacheLifetimeInSecs) || cacheLifetimeInSecs <= 0)
+        )
+          return false;
 
-      cacheLifetimeInSecs = cacheLifetimeInSecs || 0;
+        cacheLifetimeInSecs = cacheLifetimeInSecs || 0;
 
-      const cacheHitProb = util.getCacheHitProbability(cacheLifetimeInSecs);
+        const cacheHitProb = util.getCacheHitProbability(cacheLifetimeInSecs);
 
-      if (cacheHitProb > IGNORE_THRESHOLD_IN_PERCENT) return false;
+        if (cacheHitProb > IGNORE_THRESHOLD_IN_PERCENT) return false;
 
-      const totalBytes = r.CDP.compressedSize.value;
+        const totalBytes = r.CDP.compressedSize.value;
 
-      const wastedBytes = (1 - cacheHitProb) * totalBytes;
-      totalWastedBytes += wastedBytes;
+        const wastedBytes = (1 - cacheHitProb) * totalBytes;
+        totalWastedBytes += wastedBytes;
 
-      results.push({
-        name: util.getUrlLastSegment(recordUrl.toString()).split("?")[0],
-        resourceType,
-        cache: cacheControl,
-        cacheHitProbability: cacheHitProb,
-        totalBytes,
-        wastedBytes,
+        results.push({
+          name: util.getUrlLastSegment(recordUrl.toString()).split("?")[0],
+          resourceType,
+          cache: cacheControl,
+          cacheHitProbability: cacheHitProb,
+          totalBytes,
+          wastedBytes,
+        });
+
+        return;
       });
 
-      return;
-    });
-
-    const score = util.computeLogNormalScore(
-      DEFAULT.REPORT.scoring.cache,
-      totalWastedBytes
-    );
-    const meta = util.successOrFailureMeta(
-      LeverageBrowserCachingAudit.meta,
-      score
-    );
-    debug("done");
-    return {
-      meta,
-      score,
-      scoreDisplayMode: "numeric",
-      ...(results.length
-        ? {
-            extendedInfo: {
-              value: {
-                totalWastedBytes: {
-                  value: totalWastedBytes,
-                  units: "bytes",
+      const score = util.computeLogNormalScore(
+        DEFAULT.REPORT.scoring.cache,
+        totalWastedBytes
+      );
+      const meta = util.successOrFailureMeta(
+        LeverageBrowserCachingAudit.meta,
+        score
+      );
+      debug("done");
+      return {
+        meta,
+        score,
+        scoreDisplayMode: "numeric",
+        ...(results.length
+          ? {
+              extendedInfo: {
+                value: {
+                  totalWastedBytes: {
+                    value: totalWastedBytes,
+                    units: "bytes",
+                  },
+                  records: results,
                 },
-                records: results,
               },
-            },
-          }
-        : {}),
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(LeverageBrowserCachingAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
+            }
+          : {}),
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(LeverageBrowserCachingAudit.meta),
+        scoreDisplayMode: "skip",
+      };
+    }
   }
 }

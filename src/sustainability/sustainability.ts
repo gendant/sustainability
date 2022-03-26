@@ -17,10 +17,10 @@ export default class Sustainability {
     this._settings = settings?.connectionSettings
       ? { ...DEFAULT.CONNECTION_SETTINGS, ...settings.connectionSettings }
       : DEFAULT.CONNECTION_SETTINGS;
-    
-      if (settings?.id) {
-        this._id = settings.id;
-      }
+
+    if (settings?.id) {
+      this._id = settings.id;
+    }
   }
 
   /**
@@ -44,7 +44,6 @@ export default class Sustainability {
     const isColdRun = sustainability._settings.coldRun;
 
     try {
-
       browser =
         settings?.browser ??
         (await sustainability._startNewConnectionAndReturnBrowser(

@@ -17,40 +17,43 @@ export default class UsesGreenServerAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult | undefined> {
     const debug = util.debugGenerator("UsesGreenServer Audit");
-    try{
-    debug("running");
-    if (traces.server.energySource) {
-      const { isGreen, hostedby } = traces.server.energySource;
-      const score = Number(isGreen);
+    try {
+      debug("running");
+      if (traces.server.energySource) {
+        const { isGreen, hostedby } = traces.server.energySource;
+        const score = Number(isGreen);
 
-      const meta = util.successOrFailureMeta(UsesGreenServerAudit.meta, score);
+        const meta = util.successOrFailureMeta(
+          UsesGreenServerAudit.meta,
+          score
+        );
 
-      debug("done");
+        debug("done");
+        return {
+          meta,
+          score,
+          scoreDisplayMode: "binary",
+          ...(hostedby
+            ? {
+                extendedInfo: {
+                  value: { hostedby },
+                },
+              }
+            : {}),
+        };
+      }
+
       return {
-        meta,
-        score,
-        scoreDisplayMode: "binary",
-        ...(hostedby
-          ? {
-              extendedInfo: {
-                value: { hostedby },
-              },
-            }
-          : {}),
+        meta: util.skipMeta(UsesGreenServerAudit.meta),
+        scoreDisplayMode: "skip",
+        errorMessage: "Failed to fetch energy source of host",
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(UsesGreenServerAudit.meta),
+        scoreDisplayMode: "skip",
       };
     }
-
-    return {
-      meta: util.skipMeta(UsesGreenServerAudit.meta),
-      scoreDisplayMode: "skip",
-      errorMessage: "Failed to fetch energy source of host",
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(UsesGreenServerAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
   }
 }

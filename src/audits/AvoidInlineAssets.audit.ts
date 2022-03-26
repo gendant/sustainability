@@ -18,45 +18,48 @@ export default class AvoidInlineAssetsAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("AvoidInlineAssets Audit");
-    try{
-    debug("running");
-    const bigInlineAssets = [
-      ...traces.css.info.styles,
-      ...traces.js.info.scripts,
-    ]
-      .map((asset) => {
-        return {
-          name: asset.src,
-          size: asset.size,
-        };
-      })
-      .filter((asset) => {
-        return asset.size > MAX_SINGLE_INLINE_ASSET_SIZE;
-      });
+    try {
+      debug("running");
+      const bigInlineAssets = [
+        ...traces.css.info.styles,
+        ...traces.js.info.scripts,
+      ]
+        .map((asset) => {
+          return {
+            name: asset.src,
+            size: asset.size,
+          };
+        })
+        .filter((asset) => {
+          return asset.size > MAX_SINGLE_INLINE_ASSET_SIZE;
+        });
 
-    const score = Number(bigInlineAssets.length === 0);
+      const score = Number(bigInlineAssets.length === 0);
 
-    const meta = util.successOrFailureMeta(AvoidInlineAssetsAudit.meta, score);
-    debug("done");
+      const meta = util.successOrFailureMeta(
+        AvoidInlineAssetsAudit.meta,
+        score
+      );
+      debug("done");
 
-    return {
-      meta,
-      score,
-      scoreDisplayMode: "binary",
-      ...(bigInlineAssets.length > 0
-        ? {
-            extendedInfo: {
-              value: bigInlineAssets,
-            },
-          }
-        : {}),
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(AvoidInlineAssetsAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
+      return {
+        meta,
+        score,
+        scoreDisplayMode: "binary",
+        ...(bigInlineAssets.length > 0
+          ? {
+              extendedInfo: {
+                value: bigInlineAssets,
+              },
+            }
+          : {}),
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(AvoidInlineAssetsAudit.meta),
+        scoreDisplayMode: "skip",
+      };
+    }
   }
 }

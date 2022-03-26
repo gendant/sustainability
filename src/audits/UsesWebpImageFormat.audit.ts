@@ -12,7 +12,12 @@ export default class UsesWebpImageFormatAudit extends Audit {
       description:
         "WebP images provides superior lossless and lossy compression for images on the web. They maintain a low file size and high quality at the same time.  Although browser support is good (77%) you may use WebP images along with other fallback sources.",
       category: "design",
-      collectors: ["lazymediacollect", "mediacollect", "lazymediacollect"],
+      collectors: [
+        "lazymediacollect",
+        "mediacollect",
+        "transfercollect",
+        "redirectcollect",
+      ],
     } as Meta;
   }
 
@@ -26,70 +31,70 @@ export default class UsesWebpImageFormatAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesWebPImageFormat Audit");
-    try{
-    const mediaImages = [
-      ...(traces.lazyMedia ? [traces.lazyMedia.lazyImages] : []).flat(),
-      ...traces.record
-        .filter((r) => r.request.resourceType === "image")
-        .map((r) => r.response.url.toString()),
-    ];
+    try {
+      const mediaImages = [
+        ...(traces.lazyMedia ? [traces.lazyMedia.lazyImages] : []).flat(),
+        ...traces.record
+          .filter((r) => r.request.resourceType === "image")
+          .map((r) => r.response.url.toString()),
+      ];
 
-    const isAuditApplicable = (): boolean => {
-      if (!mediaImages.length) return false;
-      if (!mediaImages.some((url) => /\.(?:jpg|gif|png|webp)$/.test(url)))
-        return false;
-
-      return true;
-    };
-
-    if (isAuditApplicable()) {
-      debug("running");
-      const auditUrls = new Set<string>();
-
-      mediaImages.filter((url) => {
-        if (url.startsWith("data:")) {
-          auditUrls.add(url.slice(0, 40));
+      const isAuditApplicable = (): boolean => {
+        if (!mediaImages.length) return false;
+        if (!mediaImages.some((url) => /\.(?:jpg|gif|png|webp)$/.test(url)))
           return false;
-        }
-        if (url.endsWith(".webp")) return false;
-        if (!/\.(?:jpg|gif|png)$/.test(url)) return false;
-        const urlLastSegment = util.getUrlLastSegment(url);
-        auditUrls.add(urlLastSegment);
-        return true;
-      });
 
-      const score = Number(auditUrls.size === 0);
-      const meta = util.successOrFailureMeta(
-        UsesWebpImageFormatAudit.meta,
-        score
-      );
-      debug("done");
+        return true;
+      };
+
+      if (isAuditApplicable()) {
+        debug("running");
+        const auditUrls = new Set<string>();
+
+        mediaImages.filter((url) => {
+          if (url.startsWith("data:")) {
+            auditUrls.add(url.slice(0, 40));
+            return false;
+          }
+          if (url.endsWith(".webp")) return false;
+          if (!/\.(?:jpg|gif|png)$/.test(url)) return false;
+          const urlLastSegment = util.getUrlLastSegment(url);
+          auditUrls.add(urlLastSegment);
+          return true;
+        });
+
+        const score = Number(auditUrls.size === 0);
+        const meta = util.successOrFailureMeta(
+          UsesWebpImageFormatAudit.meta,
+          score
+        );
+        debug("done");
+        return {
+          meta,
+          score,
+          scoreDisplayMode: "binary",
+          ...(auditUrls.size > 0
+            ? {
+                extendedInfo: {
+                  value: Array.from(auditUrls.values()),
+                },
+              }
+            : {}),
+        };
+      }
+
+      debug("skipping non applicable audit");
+
       return {
-        meta,
-        score,
-        scoreDisplayMode: "binary",
-        ...(auditUrls.size > 0
-          ? {
-              extendedInfo: {
-                value: Array.from(auditUrls.values()),
-              },
-            }
-          : {}),
+        meta: util.skipMeta(UsesWebpImageFormatAudit.meta),
+        scoreDisplayMode: "skip",
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(UsesWebpImageFormatAudit.meta),
+        scoreDisplayMode: "skip",
       };
     }
-
-    debug("skipping non applicable audit");
-
-    return {
-      meta: util.skipMeta(UsesWebpImageFormatAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(UsesWebpImageFormatAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
   }
 }

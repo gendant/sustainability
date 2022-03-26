@@ -23,24 +23,23 @@ export default class UsesDarkModeAudit extends Audit {
    */
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesDarkMode Audit");
-    try{
-    debug("running");
-    const score = Number(traces.screenshot.hasDarkMode);
-    const meta = util.successOrFailureMeta(UsesDarkModeAudit.meta, score);
-    debug("done");
+    try {
+      debug("running");
+      const score = Number(traces.screenshot.hasDarkMode);
+      const meta = util.successOrFailureMeta(UsesDarkModeAudit.meta, score);
+      debug("done");
 
-    return {
-      meta,
-      score,
-      scoreDisplayMode: "binary",
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(UsesDarkModeAudit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
-    
+      return {
+        meta,
+        score,
+        scoreDisplayMode: "binary",
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(UsesDarkModeAudit.meta),
+        scoreDisplayMode: "skip",
+      };
+    }
   }
 }

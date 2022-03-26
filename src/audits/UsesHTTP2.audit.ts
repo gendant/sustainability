@@ -22,34 +22,34 @@ export default class UsesHTTP2Audit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("UsesHTTP2 Audit");
-    try{
-    debug("running");
-    const { hosts } = traces.server;
-    let urlCounter = 0;
-    traces.record.filter((record) => {
-      const recordUrl = record.request.url;
-      if (!record.request.protocol) return false;
-      if (record.response.fromServiceWorker) return false;
-      if (record.request.protocol === "h2") return false;
-      if (record.request.protocol === "data") return false;
-      if (!hosts.includes(recordUrl.hostname)) return false;
-      urlCounter++;
-      return true;
-    });
-    const score = Number(urlCounter === 0);
-    const meta = util.successOrFailureMeta(UsesHTTP2Audit.meta, score);
-    debug("done");
-    return {
-      meta,
-      score,
-      scoreDisplayMode: "binary",
-    };
-  } catch (error) {
-    debug(`Failed with error: ${error}`);
-    return {
-      meta: util.skipMeta(UsesHTTP2Audit.meta),
-      scoreDisplayMode: "skip",
-    };
-  }
+    try {
+      debug("running");
+      const { hosts } = traces.server;
+      let urlCounter = 0;
+      traces.record.filter((record) => {
+        const recordUrl = record.request.url;
+        if (!record.request.protocol) return false;
+        if (record.response.fromServiceWorker) return false;
+        if (record.request.protocol === "h2") return false;
+        if (record.request.protocol === "data") return false;
+        if (!hosts.includes(recordUrl.hostname)) return false;
+        urlCounter++;
+        return true;
+      });
+      const score = Number(urlCounter === 0);
+      const meta = util.successOrFailureMeta(UsesHTTP2Audit.meta, score);
+      debug("done");
+      return {
+        meta,
+        score,
+        scoreDisplayMode: "binary",
+      };
+    } catch (error) {
+      debug(`Failed with error: ${error}`);
+      return {
+        meta: util.skipMeta(UsesHTTP2Audit.meta),
+        scoreDisplayMode: "skip",
+      };
+    }
   }
 }
