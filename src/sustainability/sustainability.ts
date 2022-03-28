@@ -174,7 +174,7 @@ export default class Sustainability {
         },
         audit: report,
       };
-      //this._settings.pipe?.push(JSON.stringify(pushStream));
+      this._settings.pipe.push(JSON.stringify(pushStream));
 
       if (this._settings.pipeTerminateOnEnd) {
         this._settings.pipe.push(null);

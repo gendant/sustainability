@@ -57,19 +57,11 @@ describe("Sustainability", () => {
   it("works with coldRun disabled and streams enabled", async () => {
     Sustainability.auditStream.pipe(process.stdout);
     await runAudit("animations", {
+      id: "0x12221ae",
       connectionSettings: { coldRun: false, streams: true },
     });
     expect(true).toBeTruthy();
   });
-  it("streams id when streams are enabled and id in settings", async () => {
-    Sustainability.auditStream.pipe(process.stdout);
-    await runAudit("animations", {
-      id: "0x12221ae",
-      connectionSettings: { streams: true },
-    });
-    expect(true).toBeTruthy();
-  });
-
   it("custom stream pipe work", async () => {
     const readableStream = new Readable({
       read() {},

@@ -1,6 +1,6 @@
 # Changelog
 
-## v. 0.5.5 (28/3/2022)
+## v. 0.5.6 (28/3/2022)
 
 - Upgrades packages
 
