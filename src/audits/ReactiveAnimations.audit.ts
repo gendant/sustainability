@@ -17,47 +17,40 @@ export default class ReactiveAnimationsAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("SmartAnimations Audit");
-    try {
-      const isAuditApplicable = (): boolean => {
-        if (!traces.animations) return false;
-        return true;
-      };
 
-      if (isAuditApplicable()) {
-        debug("running");
-        const score = Number(traces.animations.notReactive.length === 0);
-        const meta = util.successOrFailureMeta(
-          ReactiveAnimationsAudit.meta,
-          score
-        );
-        debug("done");
+    const isAuditApplicable = (): boolean => {
+      if (!traces.animations) return false;
+      return true;
+    };
 
-        return {
-          meta,
-          score,
-          scoreDisplayMode: "binary",
-          ...(score
-            ? {}
-            : {
-                extendedInfo: {
-                  value: traces.animations.notReactive,
-                },
-              }),
-        };
-      }
-
-      debug("skipping non applicable audit");
+    if (isAuditApplicable()) {
+      debug("running");
+      const score = Number(traces.animations.notReactive.length === 0);
+      const meta = util.successOrFailureMeta(
+        ReactiveAnimationsAudit.meta,
+        score
+      );
+      debug("done");
 
       return {
-        meta: util.skipMeta(ReactiveAnimationsAudit.meta),
-        scoreDisplayMode: "skip",
-      };
-    } catch (error) {
-      debug(`Failed with error: ${error}`);
-      return {
-        meta: util.skipMeta(ReactiveAnimationsAudit.meta),
-        scoreDisplayMode: "skip",
+        meta,
+        score,
+        scoreDisplayMode: "binary",
+        ...(score
+          ? {}
+          : {
+              extendedInfo: {
+                value: traces.animations.notReactive,
+              },
+            }),
       };
     }
+
+    debug("skipping non applicable audit");
+
+    return {
+      meta: util.skipMeta(ReactiveAnimationsAudit.meta),
+      scoreDisplayMode: "skip",
+    };
   }
 }

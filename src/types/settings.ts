@@ -85,7 +85,7 @@ export interface PrivateSettings {
   location: EmulatedLocation;
   maxThrottle: number;
   streams: boolean;
-  pipe?: Readable;
+  pipe: Readable;
   pipeTerminateOnEnd?: boolean;
   coldRun: boolean;
 }

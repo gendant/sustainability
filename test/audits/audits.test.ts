@@ -210,6 +210,11 @@ describe("CookieOptimisation Audit", () => {
     } as Traces);
     expect(auditResult?.scoreDisplayMode).toEqual("skip");
   });
+
+  it("handles errors", async () => {
+    const auditResult = await CookieOptimisation.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
+  });
 });
 
 describe("LeverageBrowserCaching audit", () => {
@@ -525,6 +530,10 @@ describe("LeverageBrowserCaching audit", () => {
     expect(auditResult?.extendedInfo?.value.totalWastedBytes).toBeTruthy();
     expect(auditResult?.extendedInfo?.value.records).toBeTruthy();
   });
+  it("handles errors", async () => {
+    const auditResult = await LeverageBrowserCachingAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
+  });
 });
 
 describe("NoConsoleLogs audit", () => {
@@ -548,7 +557,7 @@ describe("NoConsoleLogs audit", () => {
   });
   it("fails audits without console trace (error)", async () => {
     const auditResult = await NoConsoleLogsAudit.audit({} as Traces);
-    expect(auditResult.score).toBe(0);
+    expect(auditResult.scoreDisplayMode).toBe("skip");
   });
 });
 describe("PixelEnergyEfficiency audit", () => {
@@ -557,6 +566,10 @@ describe("PixelEnergyEfficiency audit", () => {
       screenshot: { power: 10 },
     } as Traces);
     expect(auditResult.score).toBe(1);
+  });
+  it("handles errors", async () => {
+    const auditResult = await PixelEnergyEfficiencyAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
   });
 });
 describe("ReactiveAnimations audit", () => {
@@ -577,6 +590,11 @@ describe("ReactiveAnimations audit", () => {
       },
     } as Traces)) as Result;
     expect(auditResult.score).toBe(0);
+  });
+
+  it("handles errors", async () => {
+    const auditResult = await ReactiveAnimationsAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
   });
 });
 describe("UsesCompression audit", () => {
@@ -758,6 +776,11 @@ describe("UsesCompression audit", () => {
     expect(auditResult.score).toBe(0);
     expect(auditResult?.extendedInfo?.value.length).toEqual(1);
   });
+
+  it("handles errors", async () => {
+    const auditResult = await UsesCompressionAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
+  });
 });
 
 describe("UsesDarkMode audit", () => {
@@ -766,6 +789,10 @@ describe("UsesDarkMode audit", () => {
       screenshot: { hasDarkMode: true },
     } as Traces);
     expect(auditResult.score).toBe(1);
+  });
+  it("handles errors", async () => {
+    const auditResult = await UsesDarkModeAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
   });
 });
 
@@ -985,6 +1012,10 @@ describe("UsesFontSubsetting audit", () => {
     expect(auditResult.score).toEqual(0);
     expect(auditResult.extendedInfo?.value[0].name).toEqual("sensation");
   });
+  it("handles errors", async () => {
+    const auditResult = await UsesFontSubsettingAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
+  });
 });
 describe("UsesGreenServer audit", () => {
   it("passess on audits with green origin servers", async () => {
@@ -1044,6 +1075,10 @@ describe("UsesGreenServer audit", () => {
       ],
     } as Traces);
 
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
+  });
+  it("handles errors", async () => {
+    const auditResult = await UsesGreenServerAudit.audit({} as Traces);
     expect(auditResult?.scoreDisplayMode).toEqual("skip");
   });
 });
@@ -1170,6 +1205,10 @@ describe("UsesHTTP2 audit", () => {
     } as Traces);
     expect(auditResult.score).toEqual(1);
   });
+  it("handles errors", async () => {
+    const auditResult = await UsesHTTP2Audit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
+  });
 });
 
 describe("UsesLazyLoading audit", () => {
@@ -1225,6 +1264,10 @@ describe("UsesLazyLoading audit", () => {
       },
     } as Traces)) as Result;
     expect(auditResult.score).toEqual(1);
+  });
+  it("handles errors", async () => {
+    const auditResult = await UsesLazyLoadingAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
   });
 });
 describe("UsesWebmVideoFormat audit", () => {
@@ -1342,6 +1385,10 @@ describe("UsesWebmVideoFormat audit", () => {
 
     expect(auditResult.score).toEqual(1);
   });
+  it("handles errors", async () => {
+    const auditResult = await UsesWebmVideoFormatAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
+  });
 });
 
 describe("UsesWebpImageFormat audit", () => {
@@ -1454,6 +1501,10 @@ describe("UsesWebpImageFormat audit", () => {
 
     expect(auditResult.score).toEqual(1);
   });
+  it("handles errors", async () => {
+    const auditResult = await UsesWebpImageFormatAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
+  });
 });
 
 describe("AvoidInlineAssets audit", () => {
@@ -1502,6 +1553,10 @@ describe("AvoidInlineAssets audit", () => {
     } as Traces);
     expect(auditResult.score).toEqual(1);
   });
+  it("handles errors", async () => {
+    const auditResult = await AvoidInlineAssetsAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
+  });
 });
 describe("AvoidURLRedirects audit", () => {
   it("ignores empty redirects", async () => {
@@ -1538,10 +1593,17 @@ describe("AvoidURLRedirects audit", () => {
     expect(auditResult.score).toEqual(0);
     expect(auditResult?.extendedInfo?.value.length).toEqual(1);
   });
+  it("handles errors", async () => {
+    const auditResult = await AvoidURLRedirectsAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
+  });
 });
 describe("AvoidableBotTraffic audit", () => {
   it("skips audits without robots traces", async () => {
-    const auditResult = await AvoidableBotTrafficAudit.audit({} as Traces);
+    const auditResult = await AvoidableBotTrafficAudit.audit({
+      server: { hosts: ["localhost"] },
+      robots: {},
+    } as Traces);
     expect(auditResult.scoreDisplayMode).toEqual("skip");
   });
   it("fails audits with poorly configured robots.txt file", async () => {
@@ -1730,6 +1792,10 @@ describe("AvoidableBotTraffic audit", () => {
       } as RobotsFormat,
     } as Traces)) as Result;
     expect(auditResult.score).toEqual(1);
+  });
+  it("handles errors", async () => {
+    const auditResult = await AvoidableBotTrafficAudit.audit({} as Traces);
+    expect(auditResult?.scoreDisplayMode).toEqual("skip");
   });
 });
 describe("CarbonFootprintAudit", () => {

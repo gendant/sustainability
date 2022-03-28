@@ -17,9 +17,9 @@ export default class AvoidURLRedirectsAudit extends Audit {
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
     const debug = util.debugGenerator("AvoidURLRedirects Audit");
-    const { hosts } = traces.server;
     try {
       debug("running");
+      const { hosts } = traces.server;
       const redirects = traces.redirect
         .filter((record) => {
           return hosts.includes(new URL(record.url).hostname);

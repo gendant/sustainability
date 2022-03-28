@@ -72,6 +72,7 @@ export interface SuccessOrFailureMeta {
 
 export interface SkipResult {
   scoreDisplayMode: ScoreDisplayMode;
+  score?: number;
   meta: SkipMeta;
   extendedInfo?: { value: ExtendedInfo };
   errorMessage?: string;
@@ -82,6 +83,7 @@ export interface ExtendedInfo {
 }
 
 export interface AuditReportMeta {
+  id?: string;
   url: string;
   timing: Array<string | number>;
 }

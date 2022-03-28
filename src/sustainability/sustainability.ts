@@ -1,14 +1,14 @@
 import { Browser, LaunchOptions, Page } from "puppeteer";
-import { Readable } from "stream";
 import Commander from "../commander/commander";
 import Connection from "../connection/connection";
 import { DEFAULT } from "../settings/settings";
 import { AuditSettings, PageContext } from "../types";
-import { AuditStreamChunk, Report } from "../types/audit";
+import { AuditReportMeta, AuditStreamChunk, Report } from "../types/audit";
 import * as util from "../utils/utils";
 import { auditStream } from "./stream";
 
 const debug = util.debugGenerator("Sustainability");
+
 export default class Sustainability {
   private _settings;
   private _id;
@@ -91,7 +91,8 @@ export default class Sustainability {
   private async _startNewConnectionAndReturnBrowser(
     settings?: LaunchOptions
   ): Promise<Browser> {
-    const browser = await Connection.setUp(settings);
+    const connection = new Connection();
+    const browser = await connection.setUp(settings);
     return browser;
   }
 
@@ -134,20 +135,26 @@ export default class Sustainability {
     const isStream = this._settings.streams;
     const startTime = Date.now();
     const { url } = pageContextRaw;
-    const page = await Commander.setUp(pageContextRaw, settings);
+
+    const commander = new Commander();
+    const page = await commander.setUp(pageContextRaw, settings);
     const pageContext = { ...pageContextRaw, page };
     const [_, auditResults] = await Promise.allSettled([
       util.navigate(pageContext, "networkidle0", debug, false, this._settings),
-      Commander.evaluate(pageContext),
+      commander.evaluate(pageContext),
     ]);
 
     page.removeAllListeners();
+    if (isStream) {
+      commander.clearAllListeners();
+    }
 
     const resultsParsed = util.parseAllSettledAudits(auditResults);
     const audits = util.groupAudits(resultsParsed);
     const globalScore = util.computeScore(audits);
 
-    const meta = {
+    const meta: AuditReportMeta = {
+      ...(this._id ? { id: this._id } : {}),
       url,
       timing: [new Date(startTime).toISOString(), Date.now() - startTime],
     };
@@ -167,10 +174,10 @@ export default class Sustainability {
         },
         audit: report,
       };
-      this._settings.pipe?.push(JSON.stringify(pushStream));
+      //this._settings.pipe?.push(JSON.stringify(pushStream));
 
       if (this._settings.pipeTerminateOnEnd) {
-        this._settings.pipe?.push(null);
+        this._settings.pipe.push(null);
       }
       debug("Done streaming audits");
     }

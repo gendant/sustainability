@@ -2,7 +2,6 @@ import { EventEmitter, once } from "events";
 import * as fs from "fs";
 import * as path from "path";
 import { Page } from "puppeteer";
-import { Sustainability } from "..";
 import Collect from "../collect/collect";
 import { DEFAULT } from "../settings/settings";
 import { AuditSettings, PageContext } from "../types";
@@ -13,7 +12,7 @@ import * as util from "../utils/utils";
 
 const debug = util.debugGenerator("Commander");
 
-class Commander {
+export default class Commander {
   private _settings = {} as PrivateSettings;
   private readonly _audits = DEFAULT.AUDITS;
   private _id = "";
@@ -215,11 +214,14 @@ class Commander {
       };
 
       debug(`Streaming ${auditInstance.meta.id} audit`);
-      this._settings.pipe?.push(JSON.stringify(pushStream));
+      this._settings.pipe.push(JSON.stringify(pushStream));
 
       return auditResult;
     });
   }
-}
 
-export default new Commander();
+  clearAllListeners() {
+    debug("Removing all listeners");
+    this._globalEventEmitter.removeAllListeners();
+  }
+}

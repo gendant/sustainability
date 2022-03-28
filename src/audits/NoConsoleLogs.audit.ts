@@ -20,19 +20,19 @@ export default class NoConsoleLogsAudit extends Audit {
     try {
       debug("running");
       const dups = new Set();
-      const uniqueResources = traces.console?.filter((trace) => {
+      const uniqueResources = traces.console.filter((trace) => {
         const dup = dups.has(trace.text);
         dups.add(trace.text);
         return !dup;
       });
-      const score = Number(uniqueResources?.length === 0);
+      const score = Number(uniqueResources.length === 0);
       const meta = util.successOrFailureMeta(NoConsoleLogsAudit.meta, score);
       debug("done");
       return {
         meta,
         score,
         scoreDisplayMode: "binary",
-        ...(uniqueResources?.length
+        ...(uniqueResources.length
           ? {
               extendedInfo: {
                 value: uniqueResources,

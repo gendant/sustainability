@@ -25,6 +25,9 @@ const runAudit = (path: string, options?: AuditSettings, url?: string) => {
   return Sustainability.audit(url, options);
 };
 
+const connection = new Connection();
+const commander = new Commander();
+
 beforeAll(async () => {
   await server.listen(3334);
 });
@@ -93,7 +96,7 @@ describe("Sustainability", () => {
     });
   });
   it("works when custom browser is passed", async () => {
-    const browser = await Connection.setUp();
+    const browser = await connection.setUp();
     await runAudit("animations", {
       browser,
     });
@@ -106,7 +109,7 @@ describe("targeted tests to improve coverage", () => {
   it("commander setup throws error", async () => {
     try {
       expect(
-        await Commander.setUp({
+        await commander.setUp({
           url: "http://localhost:3334/animations.html",
           page: {} as Page,
         })
@@ -118,7 +121,7 @@ describe("targeted tests to improve coverage", () => {
   it("commander staticEvaluate throws error", async () => {
     try {
       expect(
-        await Commander.staticEvaluate({
+        await commander.staticEvaluate({
           url: "http://localhost:3334/animations.html",
           page: {} as Page,
         })

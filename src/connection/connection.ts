@@ -9,7 +9,7 @@ import * as util from "../utils/utils";
 
 const debug = util.debugGenerator("Connection");
 
-class Connection {
+export default class Connection {
   private launchSettings = {} as PuppeteerLaunchOptions;
 
   async setUp(
@@ -26,5 +26,3 @@ class Connection {
     return browser;
   }
 }
-
-export default new Connection();

@@ -24,6 +24,8 @@ export default class AvoidableBotTrafficAudit extends Audit {
     const debug = util.debugGenerator("AvoidableBotTraffic Audit");
     try {
       debug("running");
+      const { hosts } = traces.server;
+
       if (!(traces.robots && Object.keys(traces.robots).length)) {
         return {
           meta: util.skipMeta(AvoidableBotTrafficAudit.meta),
@@ -38,8 +40,6 @@ export default class AvoidableBotTrafficAudit extends Audit {
         );
       });
 
-      const { hosts } = traces.server;
-      debug("checking");
       const xRobotTag = traces.record.filter((r) => {
         if (!r.response.headers["x-robots-tag"]) return false;
         const recordUrl = r.request.url;
