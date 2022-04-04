@@ -1,5 +1,10 @@
 # Changelog
 
+## v. 0.5.7 (4/4/2022)
+
+- Fixes bug preventing multiple browser launches
+- Adds new fields into carbonfootprint audit share object.
+
 ## v. 0.5.6 (28/3/2022)
 
 - Upgrades packages

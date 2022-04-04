@@ -69,7 +69,6 @@ describe("Sustainability", () => {
 
     readableStream.on("data", (data) => expect(data).toBeTruthy());
     await runAudit("animations", {
-      id: "0x12221ae",
       connectionSettings: {
         streams: true,
         pipe: readableStream,

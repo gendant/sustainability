@@ -1805,7 +1805,7 @@ describe("CarbonFootprintAudit", () => {
       record: [
         {
           request: {
-            url: new URL("http://remotehost/main.js"),
+            url: new URL("http://localhost/script.js"),
             resourceType: "script",
           },
           response: {
@@ -1839,26 +1839,71 @@ describe("CarbonFootprintAudit", () => {
             uncompressedSize: { value: 12000, units: "bytes" },
           },
           CDP: {
-            compressedSize: { value: 0, units: "bytes" },
+            compressedSize: { value: 1000, units: "bytes" },
           },
         },
         {
           request: {
             resourceType: "image",
-            url: new URL("http://remotehost/"),
+            url: new URL("http://localhost/image.png"),
           },
           response: {
-            url: new URL("http://remotehost/"),
-            uncompressedSize: { value: 0, units: "bytes" },
+            url: new URL("http://localhost/image.png"),
+            uncompressedSize: { value: 1000, units: "bytes" },
           },
           CDP: {
-            compressedSize: { value: 0, units: "bytes" },
+            compressedSize: { value: 1000, units: "bytes" },
           },
         },
       ],
     } as Traces)) as Result;
 
+    const shareResult = {
+      image: {
+        info: [
+          {
+            absolute: 4.310344827586207,
+            hostname: "remotehost",
+            isThirdParty: true,
+            name: "cover2.webp",
+            relative: 50,
+            size: 1000,
+          },
+          {
+            absolute: 4.310344827586207,
+            isThirdParty: false,
+            name: "image.png",
+            relative: 50,
+            size: 1000,
+          },
+        ],
+        share: 8.620689655172415,
+        size: 2000,
+      },
+      script: {
+        info: [
+          {
+            absolute: 52.58620689655172,
+            isThirdParty: false,
+            name: "script.js",
+            relative: 57.54716981132076,
+            size: 12200,
+          },
+          {
+            absolute: 38.793103448275865,
+            hostname: "remotehost",
+            isThirdParty: true,
+            name: "main.js",
+            relative: 42.45283018867924,
+            size: 9000,
+          },
+        ],
+        share: 91.37931034482759,
+        size: 21200,
+      },
+    };
     expect(auditResult.score).toBe(1);
+    expect(auditResult.extendedInfo?.value.share).toEqual(shareResult);
   });
   it("skips on audits with unknown error", async () => {
     const auditResult = await CarbonFootprintAudit.audit({

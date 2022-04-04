@@ -32,7 +32,7 @@ import { DefaultSettings } from "../types/settings";
 
 export const DEFAULT: DefaultSettings = {
   LAUNCH_SETTINGS: {
-    timeout: 0,
+    timeout: 30 * 1000,
   },
   CONNECTION_SETTINGS: {
     maxNavigationTime: 30 * 1000,
