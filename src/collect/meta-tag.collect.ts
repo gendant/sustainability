@@ -4,6 +4,7 @@ import * as util from "../utils/utils";
 import { PrivateSettings } from "../types/settings";
 import { MetaTagFormat, CollectMetaTagsTraces, MetaTag } from "../types/traces";
 import { CollectMeta } from "../types/audit";
+import { DEFAULT } from "../settings/settings";
 
 export default class CollectMetaTags extends Collect {
   static get meta() {
@@ -21,7 +22,9 @@ export default class CollectMetaTags extends Collect {
     debug("running");
     const { page } = pageContext;
 
-    await page.waitForSelector("meta");
+    await page.waitForSelector("meta", {
+      timeout: DEFAULT.CONNECTION_SETTINGS.maxScrollWaitingTime,
+    });
     const metaTags = await page.evaluate(() => {
       const metaTags: MetaTagFormat[] = [];
       const getElementAttributes = (element: HTMLElement) =>

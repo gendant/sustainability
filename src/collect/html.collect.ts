@@ -1,3 +1,4 @@
+import { DEFAULT } from "../settings/settings";
 import { PageContext } from "../types";
 import { CollectMeta } from "../types/audit";
 import { CollectHtmlTraces } from "../types/traces";
@@ -22,14 +23,16 @@ export default class CollectHTML extends Collect {
       const { page } = pageContext;
       const result: string[] = [];
 
-      await page.waitForSelector("body");
+      await page.waitForSelector("body", {
+        timeout: DEFAULT.CONNECTION_SETTINGS.maxScrollWaitingTime,
+      });
       const javascriptHtml = await page.evaluate(
         () => document.querySelector("*")!.outerHTML
       );
       const vanillaHtml = await page.content();
 
       result.push(
-        vanillaHtml === javascriptHtml ? javascriptHtml : javascriptHtml,
+        ...(vanillaHtml !== javascriptHtml ? [javascriptHtml] : []),
         vanillaHtml
       );
       debug("done");

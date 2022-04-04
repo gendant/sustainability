@@ -1805,6 +1805,7 @@ describe("CarbonFootprintAudit", () => {
       record: [
         {
           request: {
+            url: new URL("http://remotehost/main.js"),
             resourceType: "script",
           },
           response: {
@@ -1817,6 +1818,7 @@ describe("CarbonFootprintAudit", () => {
         },
         {
           request: {
+            url: new URL("http://remotehost/main.js"),
             resourceType: "script",
           },
           response: {
@@ -1830,6 +1832,7 @@ describe("CarbonFootprintAudit", () => {
         {
           request: {
             resourceType: "image",
+            url: new URL("http://remotehost/cover2.webp"),
           },
           response: {
             url: new URL("http://remotehost/cover2.webp"),
@@ -1842,6 +1845,7 @@ describe("CarbonFootprintAudit", () => {
         {
           request: {
             resourceType: "image",
+            url: new URL("http://remotehost/"),
           },
           response: {
             url: new URL("http://remotehost/"),

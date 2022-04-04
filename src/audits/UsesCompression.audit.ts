@@ -107,7 +107,7 @@ export default class UsesCompressionAudit extends Audit {
           const gzipSavings = record.response.uncompressedSize.value - gzipSize;
 
           return {
-            url: util.getUrlLastSegment(recordUrl.toString()).split("?")[0],
+            url: util.getUrlLastSegment(recordUrl.toString()),
             resourceType: record.request.resourceType,
             savings: { value: gzipSavings, units: "bytes" },
           };

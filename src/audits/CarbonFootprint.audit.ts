@@ -89,26 +89,65 @@ export default class CarbonFootprintAudit extends Audit {
       );
       debug("evaluating file size by record type");
       const recordsByFileSize = traces.record.reduce((acc, record) => {
-        acc[record.request.resourceType] = acc[record.request.resourceType]
-          ? (acc[record.request.resourceType] +=
-              record.CDP.compressedSize.value)
-          : record.CDP.compressedSize.value;
+        const compressedSize = record.CDP.compressedSize.value;
+        if (compressedSize) {
+          const currentAccKey = acc[record.request.resourceType];
 
-        return acc;
-      }, {} as Record<string, number>);
+          const instantShare = compressedSize / totalTransfersize;
+          const name = util.getUrlLastSegment(record.request.url.toString());
+          const hostname = record.request.url.hostname;
+          const isThirdParty = !traces.server.hosts.includes(hostname);
 
-      const recordsByFileSizePercentage = Object.keys(recordsByFileSize).map(
-        (key) => {
-          const value = (
-            (recordsByFileSize[key] / totalTransfersize) *
-            100
-          ).toFixed(2);
-
-          return {
-            [key]: value,
-          };
+          acc[record.request.resourceType] = currentAccKey
+            ? {
+                size: (currentAccKey.size += compressedSize),
+                share: (currentAccKey.share += instantShare * 100),
+                info: [
+                  ...currentAccKey.info.map((i: any) => ({
+                    ...i,
+                    relative: (i.absolute / currentAccKey.share) * 100,
+                  })),
+                  {
+                    name,
+                    isThirdParty,
+                    ...(isThirdParty ? { hostname } : {}),
+                    size: compressedSize,
+                    absolute: instantShare * 100,
+                    relative:
+                      ((instantShare * 100) / currentAccKey.share) * 100,
+                  },
+                ],
+              }
+            : {
+                size: compressedSize,
+                share: instantShare * 100,
+                info: [
+                  {
+                    name,
+                    isThirdParty,
+                    ...(isThirdParty ? { hostname } : {}),
+                    size: compressedSize,
+                    absolute: instantShare * 100,
+                    relative: 100,
+                  },
+                ],
+              };
         }
-      );
+        return acc;
+      }, {} as Record<string, any>);
+
+      // const recordsByFileSizePercentage = Object.keys(recordsByFileSize).map(
+      //   (key) => {
+      //     const value = (
+      //       (recordsByFileSize[key].share / totalTransfersize) *
+      //       100
+      //     ).toFixed(2);
+
+      //     return {
+      //       [key]: value,
+      //     };
+      //   }
+      // );
       const totalWattage = records.map((record) => {
         let size;
         if (record.size !== 0) {
@@ -149,7 +188,7 @@ export default class CarbonFootprintAudit extends Audit {
               totalWattage: [sum(totalWattage).toFixed(10), "kWh"],
               carbonfootprint: [metric.toFixed(5), "gCO2eq / 100 views"],
             },
-            share: recordsByFileSizePercentage,
+            share: recordsByFileSize,
           },
         },
       };

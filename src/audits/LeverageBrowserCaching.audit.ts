@@ -67,7 +67,7 @@ export default class LeverageBrowserCachingAudit extends Audit {
         totalWastedBytes += wastedBytes;
 
         results.push({
-          name: util.getUrlLastSegment(recordUrl.toString()).split("?")[0],
+          name: util.getUrlLastSegment(recordUrl.toString()),
           resourceType,
           cache: cacheControl,
           cacheHitProbability: cacheHitProb,
