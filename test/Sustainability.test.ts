@@ -44,7 +44,7 @@ describe("Sustainability", () => {
   it("works with default options", async () => {
     const report = await runAudit("animations", {
       launchSettings: {
-        timeout: 0,
+        timeout: 30000,
       },
     });
     expect(report).toBeTruthy();
