@@ -1501,6 +1501,36 @@ describe("UsesWebpImageFormat audit", () => {
 
     expect(auditResult.score).toEqual(1);
   });
+
+  it("fails wrongful audits", async () => {
+    const auditResult = (await UsesWebpImageFormatAudit.audit({
+      record: [
+        {
+          request: {
+            resourceType: "image",
+          },
+          response: {
+            url: new URL("http://localhost/image.png?q=1"),
+          },
+        },
+        {
+          request: {
+            resourceType: "image",
+          },
+          response: {
+            url: new URL("http://localhost/image2.jpg"),
+          },
+        },
+      ],
+    } as Traces)) as Result;
+
+    expect(auditResult.score).toEqual(0);
+    expect(auditResult?.extendedInfo?.value).toEqual([
+      "image.png",
+      "image2.jpg",
+    ]);
+  });
+
   it("handles errors", async () => {
     const auditResult = await UsesWebpImageFormatAudit.audit({} as Traces);
     expect(auditResult?.scoreDisplayMode).toEqual("skip");

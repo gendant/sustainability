@@ -41,7 +41,12 @@ export default class UsesWebpImageFormatAudit extends Audit {
 
       const isAuditApplicable = (): boolean => {
         if (!mediaImages.length) return false;
-        if (!mediaImages.some((url) => /\.(?:jpg|gif|png|webp)$/.test(url)))
+        if (
+          !mediaImages.some(
+            (url) =>
+              /\.(?:jpg|gif|png|webp)/.test(url) || url.startsWith("data:")
+          )
+        )
           return false;
 
         return true;
@@ -56,8 +61,8 @@ export default class UsesWebpImageFormatAudit extends Audit {
             auditUrls.add(url.slice(0, 40));
             return false;
           }
-          if (url.endsWith(".webp")) return false;
-          if (!/\.(?:jpg|gif|png)$/.test(url)) return false;
+          if (/\.(?:webp)/.test(url)) return false;
+          if (!/\.(?:jpg|gif|png)/.test(url)) return false;
           const urlLastSegment = util.getUrlLastSegment(url);
           auditUrls.add(urlLastSegment);
           return true;

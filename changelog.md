@@ -1,5 +1,9 @@
 # Changelog
 
+## v. 0.5.8 (6/4/2022)
+
+- Fixes webp / webm audit ignoring images with query params.
+
 ## v. 0.5.7 (4/4/2022)
 
 - Fixes bug preventing multiple browser launches
