@@ -1583,6 +1583,35 @@ describe("AvoidInlineAssets audit", () => {
     } as Traces);
     expect(auditResult.score).toEqual(1);
   });
+  it("fails wrongful audits", async () => {
+    const auditResult = await AvoidInlineAssetsAudit.audit({
+      css: {
+        info: {
+          styles: [
+            {
+              src: "http://localhost#styles[0]",
+              text: "some-inline-css",
+              size: 9800,
+            },
+          ],
+          styleHrefs: [{ src: "http://localhost", attr: ["defer"] }],
+        },
+      },
+      js: {
+        info: {
+          scripts: [] as InlineScripts[],
+        },
+      },
+    } as Traces);
+    expect(auditResult.score).toEqual(0);
+    expect(auditResult?.extendedInfo?.value).toEqual([
+      {
+        name: "http://localhost#styles[0]",
+        size: 9800,
+        text: "some-inline-css",
+      },
+    ]);
+  });
   it("handles errors", async () => {
     const auditResult = await AvoidInlineAssetsAudit.audit({} as Traces);
     expect(auditResult?.scoreDisplayMode).toEqual("skip");
@@ -1892,7 +1921,7 @@ describe("CarbonFootprintAudit", () => {
       image: {
         info: [
           {
-            absolute: 4.310344827586207,
+            absolute: 4.31,
             hostname: "remotehost",
             isThirdParty: true,
             name: "cover2.webp",
@@ -1900,35 +1929,35 @@ describe("CarbonFootprintAudit", () => {
             size: 1000,
           },
           {
-            absolute: 4.310344827586207,
+            absolute: 4.31,
             isThirdParty: false,
             name: "image.png",
             relative: 50,
             size: 1000,
           },
         ],
-        share: 8.620689655172415,
+        share: 8.62,
         size: 2000,
       },
       script: {
         info: [
           {
-            absolute: 52.58620689655172,
+            absolute: 52.59,
             isThirdParty: false,
             name: "script.js",
-            relative: 57.54716981132076,
+            relative: 57.55,
             size: 12200,
           },
           {
-            absolute: 38.793103448275865,
+            absolute: 38.79,
             hostname: "remotehost",
             isThirdParty: true,
             name: "main.js",
-            relative: 42.45283018867924,
+            relative: 42.45,
             size: 9000,
           },
         ],
-        share: 91.37931034482759,
+        share: 91.38,
         size: 21200,
       },
     };

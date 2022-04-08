@@ -1,5 +1,11 @@
 # Changelog
 
+## v. 0.5.9 (8/4/2022)
+
+- Adds truncated text info on InlineAssets audits
+- More consistent captured request compressed size
+
+
 ## v. 0.5.8 (6/4/2022)
 
 - Fixes webp / webm audit ignoring images with query params.

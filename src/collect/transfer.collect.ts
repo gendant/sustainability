@@ -65,13 +65,15 @@ export default class CollectTransfer extends Collect {
       await client.send("Network.enable");
 
       client.on("Network.loadingFinished", (data: any) => {
-        if (data?.encodedDataLength) {
-          const { requestId, encodedDataLength } = data;
-          CDP.push({
-            requestId,
-            encodedDataLength,
-          });
-        }
+        const length =
+          data?.encodedDataLength > 0
+            ? data.encodedDataLength
+            : data.dataLength;
+        const { requestId } = data;
+        CDP.push({
+          requestId,
+          encodedDataLength: length,
+        });
       });
 
       client.on("Network.responseReceived", (data: any) => {
@@ -195,9 +197,10 @@ export default class CollectTransfer extends Collect {
             },
             CDP: {
               compressedSize: {
-                value:
-                  CDP.find((r: any) => r.requestId === requestId)
-                    ?.encodedDataLength ?? 0,
+                value: response.headers()["content-length"]
+                  ? Number(response.headers()["content-length"])
+                  : CDP.find((r: any) => r.requestId === requestId)
+                      ?.encodedDataLength ?? 0,
                 units: "bytes",
               },
             },
@@ -206,13 +209,12 @@ export default class CollectTransfer extends Collect {
         }
       });
 
-      if (settings.streams)
-        await util.safeNavigateTimeout(
-          page,
-          "networkidle0",
-          settings.maxNavigationTime,
-          debug
-        );
+      await util.safeNavigateTimeout(
+        page,
+        "networkidle0",
+        settings.maxNavigationTime,
+        debug
+      );
       debug("done");
       return {
         record: results,

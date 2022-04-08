@@ -94,6 +94,13 @@ export default class UsesFontSubsettingAudit extends Audit {
 
         let fontSubsets = {} as SubfontFormat[];
         const score = Number(fonts.length && nonSubsetFonts.length === 0);
+
+        /**
+         * Match html collected fonts with glyphs against css collected non-subseted fonts,
+         *  so only fonts are both groups are returned.
+         * This is to provide both glyph and subset information to enable improvement.
+         */
+
         if (score === 0) {
           const fontChars = traces.fonts.filter((font) =>
             nonSubsetFonts

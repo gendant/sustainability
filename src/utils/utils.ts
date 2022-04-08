@@ -553,10 +553,19 @@ export function shouldSkipRecord(headers: Headers, cacheControl: any) {
   return false;
 }
 
-export function getUrlLastSegment(url: string) {
-  return (url.split("/").filter(Boolean).pop() ?? url)
-    .split("?")[0]
-    .substring(0, 40);
+export function getUrlLastSegment(url: string): string {
+  let rawUrl = (url.split("/").filter(Boolean).pop() ?? url).split("?") as
+    | string
+    | string[];
+
+  // legit URL Last Segment
+  if (rawUrl.length > 0) {
+    rawUrl = rawUrl[0].substring(0, 80);
+  } else {
+    rawUrl = rawUrl[0].substring(0, 30);
+  }
+
+  return decodeURIComponent(rawUrl);
 }
 
 export function str2ab(string: string): ArrayBuffer {
@@ -567,6 +576,10 @@ export function str2ab(string: string): ArrayBuffer {
   }
 
   return buf;
+}
+
+export function truncateAsset(asset: string) {
+  return asset.substring(0, 100);
 }
 
 function getReportObject(reqReport: Report) {

@@ -93,7 +93,7 @@ export default class CarbonFootprintAudit extends Audit {
         if (compressedSize) {
           const currentAccKey = acc[record.request.resourceType];
 
-          const instantShare = compressedSize / totalTransfersize;
+          const instantSharePercent = compressedSize / totalTransfersize;
           const name = util.getUrlLastSegment(record.request.url.toString());
           const hostname = record.request.url.hostname;
           const isThirdParty = !traces.server.hosts.includes(hostname);
@@ -101,33 +101,38 @@ export default class CarbonFootprintAudit extends Audit {
           acc[record.request.resourceType] = currentAccKey
             ? {
                 size: (currentAccKey.size += compressedSize),
-                share: (currentAccKey.share += instantShare * 100),
+                share: +Number(
+                  (currentAccKey.share += instantSharePercent * 100)
+                ).toFixed(2),
                 info: [
                   ...currentAccKey.info.map((i: any) => ({
                     ...i,
-                    relative: (i.absolute / currentAccKey.share) * 100,
+                    relative: +Number(
+                      (i.absolute / currentAccKey.share) * 100
+                    ).toFixed(2),
                   })),
                   {
                     name,
                     isThirdParty,
                     ...(isThirdParty ? { hostname } : {}),
                     size: compressedSize,
-                    absolute: instantShare * 100,
-                    relative:
-                      ((instantShare * 100) / currentAccKey.share) * 100,
+                    absolute: +Number(instantSharePercent * 100).toFixed(2),
+                    relative: +Number(
+                      ((instantSharePercent * 100) / currentAccKey.share) * 100
+                    ).toFixed(2),
                   },
                 ],
               }
             : {
                 size: compressedSize,
-                share: instantShare * 100,
+                share: instantSharePercent * 100,
                 info: [
                   {
                     name,
                     isThirdParty,
                     ...(isThirdParty ? { hostname } : {}),
                     size: compressedSize,
-                    absolute: instantShare * 100,
+                    absolute: +Number(instantSharePercent * 100).toFixed(2),
                     relative: 100,
                   },
                 ],
