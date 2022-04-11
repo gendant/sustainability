@@ -48,6 +48,12 @@ describe("Sustainability", () => {
       },
     });
     expect(report).toBeTruthy();
+    expect(Object.keys(report)).toEqual([
+      "globalScore",
+      "digitalCF",
+      "meta",
+      "audits",
+    ]);
   });
 
   it("works on redirected URLs", async () => {

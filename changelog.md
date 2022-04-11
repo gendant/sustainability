@@ -1,5 +1,12 @@
 # Changelog
 
+## v. 0.6.0 (11/4/2022)
+
+- Adds accessibility collector
+- Increases CF stability: CF calculation now gets totalTransferSize from performance entries
+- Adds estimatedSavings in webP images information
+- Adds CF information on-top of report object
+
 ## v. 0.5.9 (8/4/2022)
 
 - Adds truncated text info on InlineAssets audits

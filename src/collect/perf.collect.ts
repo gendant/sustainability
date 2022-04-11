@@ -5,6 +5,8 @@ import { CollectPerformanceTraces, Metrics } from "../types/traces";
 import * as util from "../utils/utils";
 import Collect from "./collect";
 
+const MAX_PERF_BUFFER_SIZE = 10000;
+
 export default class CollectPerformance extends Collect {
   static get meta() {
     return {
@@ -20,10 +22,21 @@ export default class CollectPerformance extends Collect {
     const { page } = pageContext;
     const debug = CollectPerformance.meta.debug;
     debug("running");
-    await util.safeNavigateTimeout(page, "load", settings.maxNavigationTime);
-    const perf: Performance = (await page.evaluate(() =>
-      performance.toJSON()
-    )) as Performance;
+    await util.safeNavigateTimeout(
+      page,
+      "networkidle0",
+      settings.maxNavigationTime
+    );
+    const perf: PerformanceResourceTiming[] = JSON.parse(
+      await page.evaluate(
+        (options) => {
+          performance.setResourceTimingBufferSize(options.maxPerfBufferSize);
+          return JSON.stringify(performance.getEntries());
+        },
+        { maxPerfBufferSize: MAX_PERF_BUFFER_SIZE }
+      )
+    );
+
     const metrics: Metrics = await page.metrics();
     const info = {
       perf,

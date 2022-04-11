@@ -1,9 +1,10 @@
 import { Sustainability } from ".";
 (async () => {
-  const report = await Sustainability.audit("https://www.example.org", {
+  const report = await Sustainability.audit("https://www.reddit.com", {
     id: "000",
     connectionSettings: {
       coldRun: false,
+      streams: false,
     },
   });
 

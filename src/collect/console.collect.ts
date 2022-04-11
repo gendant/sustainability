@@ -30,7 +30,7 @@ export default class CollectConsole extends Collect {
       page.on("console", async (message: ConsoleMessage) => {
         const information = {
           type: message.type(),
-          text: message.text(),
+          text: util.trimConsoleMessage(message.text()),
         };
         /*
 			Console log client messages. Useful for debugging page evaluate
@@ -42,13 +42,13 @@ export default class CollectConsole extends Collect {
 
         results.push(information);
       });
-      if (settings.streams)
-        await util.safeNavigateTimeout(
-          page,
-          "networkidle0",
-          settings.maxNavigationTime,
-          debug
-        );
+
+      await util.safeNavigateTimeout(
+        page,
+        "networkidle0",
+        settings.maxNavigationTime,
+        debug
+      );
 
       debug("done");
       return {

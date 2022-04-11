@@ -33,7 +33,8 @@ export type CollectorsIds =
   | "lazymediacollect"
   | "metatagscollect"
   | "robotscollect"
-  | "cookiescollect";
+  | "cookiescollect"
+  | "accessibilitycollect";
 
 export type PassContext =
   | "beforenavigation"
@@ -91,6 +92,7 @@ export interface AuditReportMeta {
 export interface Report {
   comments?: string[];
   globalScore: number;
+  digitalCF?: string[];
   meta: AuditReportMeta;
   audits: AuditsByCategory[];
 }

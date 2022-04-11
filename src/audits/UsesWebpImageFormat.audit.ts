@@ -3,6 +3,8 @@ import { Traces } from "../types/traces";
 import * as util from "../utils/utils";
 import Audit from "./audit";
 
+const MIN_WEBP_VALID_THRESHOLD = 0.05;
+
 export default class UsesWebpImageFormatAudit extends Audit {
   static get meta() {
     return {
@@ -26,7 +28,7 @@ export default class UsesWebpImageFormatAudit extends Audit {
    * @applicable if the page has requested images.
    * Get image format using the MIME/type (header: content-type),
    * (careful with this: because sometimes as in AWS S3 the content-type defaults to binary/octet-stream)
-   * WebP should be used against PNG, JPG or GIF images and ofc base64 data images
+   * WebP should be used against PNG, JPG, JPEG or GIF images
    */
 
   static async audit(traces: Traces): Promise<Result | SkipResult> {
@@ -37,16 +39,11 @@ export default class UsesWebpImageFormatAudit extends Audit {
         ...traces.record
           .filter((r) => r.request.resourceType === "image")
           .map((r) => r.response.url.toString()),
-      ];
+      ].filter((img) => !/^data:/.test(img)); //skip base64 img
 
       const isAuditApplicable = (): boolean => {
         if (!mediaImages.length) return false;
-        if (
-          !mediaImages.some(
-            (url) =>
-              /\.(?:jpg|gif|png|webp)/.test(url) || url.startsWith("data:")
-          )
-        )
+        if (!mediaImages.some((url) => /\.(?:jpg|gif|png|webp|jpeg)/.test(url)))
           return false;
 
         return true;
@@ -54,17 +51,21 @@ export default class UsesWebpImageFormatAudit extends Audit {
 
       if (isAuditApplicable()) {
         debug("running");
-        const auditUrls = new Set<string>();
+        const auditUrls = new Map<string, number>();
 
         mediaImages.filter((url) => {
-          if (url.startsWith("data:")) {
-            auditUrls.add(url.slice(0, 40));
-            return false;
-          }
           if (/\.(?:webp)/.test(url)) return false;
-          if (!/\.(?:jpg|gif|png)/.test(url)) return false;
+          if (!/\.(?:jpg|gif|png|jpeg)/.test(url)) return false;
           const urlLastSegment = util.getUrlLastSegment(url);
-          auditUrls.add(urlLastSegment);
+          const estimatedSavings = traces.record.find(
+            (r) => r.response.url.toString() === url
+          )?.response.nonWebPImageEstimatedSavings;
+          if (
+            !(estimatedSavings && estimatedSavings >= MIN_WEBP_VALID_THRESHOLD)
+          )
+            return false;
+
+          auditUrls.set(urlLastSegment, estimatedSavings);
           return true;
         });
 
@@ -81,7 +82,9 @@ export default class UsesWebpImageFormatAudit extends Audit {
           ...(auditUrls.size > 0
             ? {
                 extendedInfo: {
-                  value: Array.from(auditUrls.values()),
+                  value: Array.from(auditUrls.entries()).flatMap((a) => [
+                    { name: a[0], savings: a[1] },
+                  ]),
                 },
               }
             : {}),

@@ -65,7 +65,13 @@ export default class Commander {
         page.setDefaultNavigationTimeout(0),
         page.evaluateOnNewDocument(
           fs.readFileSync(
-            path.resolve(__dirname, "../bin/glyphhanger-script.js"),
+            path.resolve(__dirname, "../bin/glyphhanger-script.min.js"),
+            "utf8"
+          )
+        ),
+        page.evaluateOnNewDocument(
+          fs.readFileSync(
+            path.resolve(__dirname, "../bin/axs-testing.min.js"),
             "utf8"
           )
         ),

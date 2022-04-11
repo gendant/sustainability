@@ -26,10 +26,12 @@ export default class CollectHTML extends Collect {
       await page.waitForSelector("body", {
         timeout: DEFAULT.CONNECTION_SETTINGS.maxScrollWaitingTime,
       });
-      const javascriptHtml = await page.evaluate(
-        () => document.querySelector("*")!.outerHTML
-      );
-      const vanillaHtml = await page.content();
+      const htmlPromiseResult = await Promise.all([
+        page.evaluate(() => document.querySelector("*")!.outerHTML),
+        page.content(),
+      ]);
+      const javascriptHtml = htmlPromiseResult[0];
+      const vanillaHtml = htmlPromiseResult[1];
 
       result.push(
         ...(vanillaHtml !== javascriptHtml ? [javascriptHtml] : []),

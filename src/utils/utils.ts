@@ -1,4 +1,5 @@
 import AbortController from "abort-controller";
+import { debug } from "console";
 import fetch from "cross-fetch";
 import * as Debug from "debug";
 import * as memoizee from "memoizee";
@@ -554,18 +555,27 @@ export function shouldSkipRecord(headers: Headers, cacheControl: any) {
 }
 
 export function getUrlLastSegment(url: string): string {
-  let rawUrl = (url.split("/").filter(Boolean).pop() ?? url).split("?") as
-    | string
-    | string[];
+  try {
+    let rawUrl = (url.split("/").filter(Boolean).pop() ?? url).split("?") as
+      | string
+      | string[];
 
-  // legit URL Last Segment
-  if (rawUrl.length > 0) {
-    rawUrl = rawUrl[0].substring(0, 80);
-  } else {
-    rawUrl = rawUrl[0].substring(0, 30);
+    // legit URL Last Segment
+    if (rawUrl.length > 0) {
+      rawUrl = rawUrl[0].substring(0, 80);
+    } else {
+      rawUrl = rawUrl[0].substring(0, 30);
+    }
+
+    return decodeURIComponent(rawUrl);
+  } catch (error) {
+    debug(error);
+    return url;
   }
+}
 
-  return decodeURIComponent(rawUrl);
+export function trimConsoleMessage(message: string) {
+  return message.replace(/\s+/g, "$N$");
 }
 
 export function str2ab(string: string): ArrayBuffer {
@@ -582,7 +592,36 @@ export function truncateAsset(asset: string) {
   return asset.substring(0, 100);
 }
 
+export function getCFFromAudits(
+  audits: AuditsByCategory[]
+): string[] | undefined {
+  const serverAudits = audits.find(
+    (audits) => audits.category.name === "server"
+  )!.audits;
+
+  const cfAuditType = Object.values(serverAudits)
+    .find((type: AuditReportFormat[]) =>
+      type.some((audit) => audit.meta.id === "carbonfootprint")
+    )
+    .find((audit: AuditReportFormat) => audit.meta.id === "carbonfootprint");
+
+  if (cfAuditType.scoreDisplayMode !== "skip") {
+    return cfAuditType.extendedInfo.value.extra.carbonfootprint;
+  }
+
+  return;
+}
+
 function getReportObject(reqReport: Report) {
+  const serverAudits = reqReport.audits.find(
+    (audits) => audits.category.name === "server"
+  )!.audits;
+
+  const cfAuditType = Object.values(serverAudits)
+    .find((type: AuditReportFormat[]) =>
+      type.some((audit) => audit.meta.id === "carbonfootprint")
+    )
+    .find((audit: AuditReportFormat) => audit.meta.id === "carbonfootprint");
   const lastAuditDate = reqReport.meta.timing[0];
   const totalPasses = reqReport.audits[0].audits.pass
     .map((audit) => audit.meta.id)
@@ -593,15 +632,6 @@ function getReportObject(reqReport: Report) {
   const totalSkips = reqReport.audits[0].audits.skip
     .map((audit) => audit.meta.id)
     .concat(reqReport.audits[1].audits.skip.map((audit) => audit.meta.id));
-
-  const serverAudits = reqReport.audits.find(
-    (audits) => audits.category.name === "server"
-  )!.audits;
-  const cfAuditType = Object.values(serverAudits)
-    .find((type: AuditReportFormat[]) =>
-      type.some((audit) => audit.meta.id === "carbonfootprint")
-    )
-    .find((audit: AuditReportFormat) => audit.meta.id === "carbonfootprint");
 
   return {
     url: reqReport.meta.url,

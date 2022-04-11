@@ -152,6 +152,7 @@ export default class Sustainability {
     const resultsParsed = util.parseAllSettledAudits(auditResults);
     const audits = util.groupAudits(resultsParsed);
     const globalScore = util.computeScore(audits);
+    const digitalCF = util.getCFFromAudits(audits);
 
     const meta: AuditReportMeta = {
       ...(this._id ? { id: this._id } : {}),
@@ -161,6 +162,7 @@ export default class Sustainability {
 
     const report: Report = {
       globalScore,
+      digitalCF,
       meta,
       audits,
     };

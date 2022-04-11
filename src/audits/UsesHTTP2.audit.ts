@@ -13,8 +13,7 @@ export default class UsesHTTP2Audit extends Audit {
       id: "useshttp2",
       title: "Uses HTTP2",
       failureTitle: `Serve assets over HTTP2`,
-      description: `HTTP2 provides advantages such as:
-            multiplexing, server push, binary headers and increased security.`,
+      description: `HTTP2 provides advantages such as: multiplexing, server push, binary headers and increased security.`,
       category: "server",
       collectors: ["transfercollect", "redirectcollect"],
     } as Meta;

@@ -28,7 +28,7 @@ export default class AvoidInlineAssetsAudit extends Audit {
           return {
             name: asset.src,
             size: asset.size,
-            text: util.truncateAsset(asset.text),
+            text: util.trimConsoleMessage(util.truncateAsset(asset.text)),
           };
         })
         .filter((asset) => {

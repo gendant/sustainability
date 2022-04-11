@@ -17,8 +17,10 @@
       "allowSyntheticDefaultImports": true
     },
     "include": [
-        "./src/**/*"
-    ],
+        "./src/**/*",
+        "src/bin/glyphhanger-script.min.js",
+        "src/bin/axs-testing-min.js"
+      ],
     "exclude" : [
       "./src/index-dev.ts"
     ]

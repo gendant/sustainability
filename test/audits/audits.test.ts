@@ -1447,7 +1447,7 @@ describe("UsesWebpImageFormat audit", () => {
 
     expect(auditResult.scoreDisplayMode).toEqual("skip");
   });
-  it("shortens base64 images and long image url", async () => {
+  it("skips base64 images", async () => {
     const originalB64Image =
       "data:image/jpeg;base64,/9j/4RiDRXhpZgAATU0AK4RiDRXhpZgAATU0AK4RiDRXhpZgAATU0AK";
     const auditResult = (await UsesWebpImageFormatAudit.audit({
@@ -1463,24 +1463,10 @@ describe("UsesWebpImageFormat audit", () => {
             url: new URL(originalB64Image),
           },
         },
-        {
-          request: {
-            resourceType: "image",
-          },
-          response: {
-            url: new URL(
-              "http://localhost/islong?=1&really-really-longimage.png"
-            ),
-          },
-        },
       ],
     } as Traces)) as Result;
 
-    expect(auditResult.score).toEqual(0);
-    expect(auditResult?.extendedInfo?.value.length).toEqual(2);
-    expect(auditResult?.extendedInfo?.value[0].length).toBeLessThan(
-      originalB64Image.length
-    );
+    expect(auditResult.scoreDisplayMode).toBe("skip");
   });
   it("passess successful audits", async () => {
     const auditResult = (await UsesWebpImageFormatAudit.audit({
@@ -1502,14 +1488,20 @@ describe("UsesWebpImageFormat audit", () => {
     expect(auditResult.score).toEqual(1);
   });
 
-  it("fails wrongful audits", async () => {
+  it("fails wrongful audits and skips images below threshold", async () => {
+    const originalB64Image =
+      "data:image/jpeg;base64,/9j/4RiDRXhpZgAATU0AK4RiDRXhpZgAATU0AK4RiDRXhpZgAATU0AK";
     const auditResult = (await UsesWebpImageFormatAudit.audit({
+      lazyMedia: {
+        lazyImages: ["http://localhost/image.png?q=1j12j1j2"],
+      },
       record: [
         {
           request: {
             resourceType: "image",
           },
           response: {
+            nonWebPImageEstimatedSavings: 0.5,
             url: new URL("http://localhost/image.png?q=1"),
           },
         },
@@ -1518,7 +1510,25 @@ describe("UsesWebpImageFormat audit", () => {
             resourceType: "image",
           },
           response: {
+            nonWebPImageEstimatedSavings: 0.5,
             url: new URL("http://localhost/image2.jpg"),
+          },
+        },
+        {
+          request: {
+            resourceType: "image",
+          },
+          response: {
+            nonWebPImageEstimatedSavings: 0.02,
+            url: new URL("http://localhost/image2.jpeg"),
+          },
+        },
+        {
+          request: {
+            resourceType: "image",
+          },
+          response: {
+            url: new URL(originalB64Image),
           },
         },
       ],
@@ -1526,8 +1536,8 @@ describe("UsesWebpImageFormat audit", () => {
 
     expect(auditResult.score).toEqual(0);
     expect(auditResult?.extendedInfo?.value).toEqual([
-      "image.png",
-      "image2.jpg",
+      { name: "image.png", savings: 0.5 },
+      { name: "image2.jpg", savings: 0.5 },
     ]);
   });
 
@@ -1861,6 +1871,14 @@ describe("CarbonFootprintAudit", () => {
   it("passess successful audits", async () => {
     const auditResult = (await CarbonFootprintAudit.audit({
       server: { hosts: ["localhost"], energySource: { isGreen: true } },
+      performance: {
+        perf: [
+          { name: "http://localhost/script.js", transferSize: 12200 },
+          { name: "http://remotehost/main.js", transferSize: 9000 },
+          { name: "http://remotehost/cover2.webp", transferSize: 1000 },
+          { name: "http://localhost/image.png", transferSize: 1000 },
+        ],
+      },
       record: [
         {
           request: {
@@ -1917,6 +1935,12 @@ describe("CarbonFootprintAudit", () => {
       ],
     } as Traces)) as Result;
 
+    const extraResult = {
+      carbonfootprint: ["0.03383", "gCO2eq / 100 views"],
+      totalComputedWattage: ["0.0000011235", "kWh"],
+      totalTransfersize: [23200, "bytes"],
+    };
+
     const shareResult = {
       image: {
         info: [
@@ -1962,6 +1986,7 @@ describe("CarbonFootprintAudit", () => {
       },
     };
     expect(auditResult.score).toBe(1);
+    expect(auditResult.extendedInfo?.value.extra).toEqual(extraResult);
     expect(auditResult.extendedInfo?.value.share).toEqual(shareResult);
   });
   it("skips on audits with unknown error", async () => {

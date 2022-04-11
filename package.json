@@ -1,6 +1,6 @@
 {
   "name": "sustainability",
-  "version": "0.5.9",
+  "version": "0.6.0",
   "description": "Digital Sustainability Audits",
   "main": "build/index.js",
   "bin": {
@@ -13,7 +13,7 @@
     "dev": "DEBUG='sustainability:*' ts-node-dev --respawn --poll --clear ./src/index-dev.ts",
     "start:dev": "DEBUG='sustainability:*' ts-node ./src/index-dev.ts",
     "format": "prettier --write  \"src/**/*.ts\" \"test/**/*.ts\" ",
-    "build": "tsc && cp ./src/bin/glyphhanger-script.js ./build/bin/",
+    "build": "tsc && cp ./src/bin/** ./build/bin/",
     "prepare": "husky install",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\""
   },

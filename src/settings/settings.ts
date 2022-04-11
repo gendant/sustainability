@@ -22,6 +22,7 @@ import CollectCookies from "../collect/cookies.collect";
 import CollectLazyMedia from "../collect/lazymedia.collect";
 import CollectMedia from "../collect/media.collect";
 import CollectMetaTags from "../collect/meta-tag.collect";
+import CollectPerformance from "../collect/perf.collect";
 import CollectRedirect from "../collect/redirect.collect";
 import CollectRobots from "../collect/robots.collect";
 import CollectScreenshot from "../collect/screenshot.collect";
@@ -33,6 +34,43 @@ import { DefaultSettings } from "../types/settings";
 export const DEFAULT: DefaultSettings = {
   LAUNCH_SETTINGS: {
     timeout: 30 * 1000,
+    args: [
+      "--autoplay-policy=user-gesture-required",
+      "--disable-background-networking",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-breakpad",
+      "--disable-client-side-phishing-detection",
+      "--disable-component-update",
+      "--disable-default-apps",
+      "--disable-dev-shm-usage",
+      "--disable-domain-reliability",
+      "--disable-extensions",
+      "--disable-features=AudioServiceOutOfProcess",
+      "--disable-hang-monitor",
+      "--disable-ipc-flooding-protection",
+      "--disable-notifications",
+      "--disable-offer-store-unmasked-wallet-cards",
+      "--disable-popup-blocking",
+      "--disable-print-preview",
+      "--disable-prompt-on-repost",
+      "--disable-renderer-backgrounding",
+      "--disable-setuid-sandbox",
+      "--disable-speech-api",
+      "--disable-sync",
+      "--hide-scrollbars",
+      "--ignore-gpu-blacklist",
+      "--metrics-recording-only",
+      "--mute-audio",
+      "--no-default-browser-check",
+      "--no-first-run",
+      "--no-pings",
+      "--no-sandbox",
+      "--no-zygote",
+      "--password-store=basic",
+      "--use-gl=swiftshader",
+      "--use-mock-keychain",
+    ],
   },
   CONNECTION_SETTINGS: {
     maxNavigationTime: 30 * 1000,
@@ -83,6 +121,7 @@ export const DEFAULT: DefaultSettings = {
       CollectAnimations,
       CollectRobots,
       CollectMetaTags,
+      CollectPerformance,
     ],
     audits: [
       UsesCompressionAudit,

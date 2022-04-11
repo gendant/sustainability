@@ -38,6 +38,7 @@ export interface Traces {
   animations: AnimationsFormat;
   cookies: Cookie[];
   metatag: MetaTagFormat[];
+  accessibility: AccessibilityFormat;
 }
 
 //ported from old @types/puppeteer 5.5.0
@@ -116,8 +117,7 @@ export interface ConsoleMessageFormat {
 }
 
 export interface PerformanceFormat {
-  perf: Performance;
-  metrics: Metrics;
+  perf: PerformanceResourceTiming[];
 }
 
 export type SubfontFormat = {
@@ -158,6 +158,21 @@ export interface MetaTagFormat {
   attr: MetaTag[];
 }
 
+export interface AccessibilityAuditFormat {
+  code: string;
+  heading: string;
+  result: AccessibilityResultType;
+  severity: string;
+  url: string;
+  elements: string;
+}
+
+export interface AccessibilityFormat {
+  audit: AccessibilityAuditFormat[];
+  report: string;
+}
+
+export type AccessibilityResultType = "PASS" | "FAIL" | "NA";
 export interface Metrics {
   /** The timestamp when the metrics sample was taken. */
   Timestamp?: number;
@@ -309,6 +324,7 @@ export interface Response {
   uncompressedSize: ByteFormat;
   gzipSize: ByteFormat;
   timestamp: number;
+  nonWebPImageEstimatedSavings?: number;
 }
 
 export interface ByteFormat {
@@ -395,6 +411,10 @@ export interface CollectSubfontsTraces {
   fonts: SubfontFormat[];
 }
 
+export interface CollectAccessibilityTraces {
+  accessibility: AccessibilityFormat;
+}
+
 export interface CollectTransferTraces {
   record: Record[];
 }
@@ -436,4 +456,5 @@ export type CollectType =
   | CollectCookiesTraces
   | CollectAnimationsTraces
   | CollectRobotsTraces
+  | CollectAccessibilityTraces
   | undefined;

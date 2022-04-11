@@ -68,7 +68,13 @@ const createPageContext = async (file: string, url?: string) => {
     page.setDefaultNavigationTimeout(0),
     page.evaluateOnNewDocument(
       fs.readFileSync(
-        path.resolve(__dirname, "../../src/bin/glyphhanger-script.js"),
+        path.resolve(__dirname, "../../src/bin/glyphhanger-script.min.js"),
+        "utf8"
+      )
+    ),
+    page.evaluateOnNewDocument(
+      fs.readFileSync(
+        path.resolve(__dirname, "../../src/bin/axs-testing.min.js"),
         "utf8"
       )
     ),
@@ -338,6 +344,20 @@ describe("Transfer collector", () => {
       "uncompressedSize",
       "gzipSize",
       "timestamp",
+    ]);
+  });
+  it("response object contains nonWebPImageEstimatedSavings if resource is image ", () => {
+    expect(assets?.record[3].request.resourceType).toBe("image");
+    expect(Object.keys(assets?.record[3].response!)).toEqual([
+      "remoteAddress",
+      "status",
+      "url",
+      "fromServiceWorker",
+      "headers",
+      "uncompressedSize",
+      "gzipSize",
+      "timestamp",
+      "nonWebPImageEstimatedSavings",
     ]);
   });
   it("collects cdp object", () => {

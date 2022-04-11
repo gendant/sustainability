@@ -17,68 +17,26 @@ export default class CarbonFootprintAudit extends Audit {
       failureTitle: `Carbon footprint is high`,
       description: `The carbon footprint is the total amount of greenhouse gases released into the atmosphere for directly or indirectly supporting a particular activity. Keeping it as low as possible it’s key to prevent the climate change.`,
       category: "server",
-      collectors: ["transfercollect", "redirectcollect"],
+      collectors: ["transfercollect", "redirectcollect", "performancecollect"],
     } as Meta;
   }
 
   /**
    * @workflow
-   * 	Compute gCO2eq considering server location,
-   *   server greenness per individual resource.
+   * 	Compute gCO2eq
    */
   static async audit(traces: Traces): Promise<Result | SkipResult> {
-    /* Const getGeoLocation = (ip:string) => {
-			//2 letter ISO-3166-1 country code https://www.iban.com/country-codes
-			const country = geoip.lookup(ip)?.country
-
-			if(country){
-				return country
-			}
-
-			return 'AVG'
-
-			}
-
-		const getGeoLocationMem = memoize(getGeoLocation)
-		*/
     const debug = util.debugGenerator("Carbonfootprint Audit");
     try {
       debug("running");
       const getValidRecords = async () => {
-        /*const getGreenRecord = async () => {
-					const pArray = traces.record.map(async record => {
-						const isGreen = await isGreenServerMem(record.response.url.hostname);
-						return isGreen?.green ?? false;
-					});
-					const isGreen = await Promise.all(pArray);
-					*/
-        return traces.record.map((record, index) => {
+        return traces.record.map((record) => {
           return {
             size: record.CDP.compressedSize.value,
             unSize: record.response.uncompressedSize.value,
-            //isGreen: isGreen[index]
           };
         });
       };
-
-      //return getGreenRecord();
-      // TODO: Bring the carbon data by regions first
-      /* Return records.map(record=>{
-	
-				    
-				   /* if(record.isGreen === false){
-						const location = getGeoLocationMem(record.ip)
-	
-						return {
-							...record,
-							location
-						}
-					}
-	
-					return record
-				})
-				*/
-      //};
 
       const records = await getValidRecords();
       debug("evaluating total page weight");
@@ -87,81 +45,73 @@ export default class CarbonFootprintAudit extends Audit {
           return record.size;
         })
       );
+
+      // used for CF calculation.
+      // although this transfer size isn't as precise as totalTransferSize, it is much more reliable
+      const totalComputableTransfersize = sum(
+        traces.performance.perf.flatMap((entry) => entry.transferSize ?? [])
+      );
+
       debug("evaluating file size by record type");
-      const recordsByFileSize = traces.record.reduce((acc, record) => {
-        const compressedSize = record.CDP.compressedSize.value;
-        if (compressedSize) {
-          const currentAccKey = acc[record.request.resourceType];
+      const recordsByFileSize = traces.record
+        .sort((a, b) => b.CDP.compressedSize.value - a.CDP.compressedSize.value)
+        .reduce((acc, record) => {
+          const compressedSize = record.CDP.compressedSize.value;
+          if (compressedSize) {
+            const currentAccKey = acc[record.request.resourceType];
 
-          const instantSharePercent = compressedSize / totalTransfersize;
-          const name = util.getUrlLastSegment(record.request.url.toString());
-          const hostname = record.request.url.hostname;
-          const isThirdParty = !traces.server.hosts.includes(hostname);
+            const instantSharePercent = compressedSize / totalTransfersize;
+            const name = util.getUrlLastSegment(record.request.url.toString());
+            const hostname = record.request.url.hostname;
+            const isThirdParty = !traces.server.hosts.includes(hostname);
 
-          acc[record.request.resourceType] = currentAccKey
-            ? {
-                size: (currentAccKey.size += compressedSize),
-                share: +Number(
-                  (currentAccKey.share += instantSharePercent * 100)
-                ).toFixed(2),
-                info: [
-                  ...currentAccKey.info.map((i: any) => ({
-                    ...i,
-                    relative: +Number(
-                      (i.absolute / currentAccKey.share) * 100
-                    ).toFixed(2),
-                  })),
-                  {
-                    name,
-                    isThirdParty,
-                    ...(isThirdParty ? { hostname } : {}),
-                    size: compressedSize,
-                    absolute: +Number(instantSharePercent * 100).toFixed(2),
-                    relative: +Number(
-                      ((instantSharePercent * 100) / currentAccKey.share) * 100
-                    ).toFixed(2),
-                  },
-                ],
-              }
-            : {
-                size: compressedSize,
-                share: instantSharePercent * 100,
-                info: [
-                  {
-                    name,
-                    isThirdParty,
-                    ...(isThirdParty ? { hostname } : {}),
-                    size: compressedSize,
-                    absolute: +Number(instantSharePercent * 100).toFixed(2),
-                    relative: 100,
-                  },
-                ],
-              };
-        }
-        return acc;
-      }, {} as Record<string, any>);
+            acc[record.request.resourceType] = currentAccKey
+              ? {
+                  size: (currentAccKey.size += compressedSize),
+                  share: +Number(
+                    (currentAccKey.share += instantSharePercent * 100)
+                  ).toFixed(2),
+                  info: [
+                    ...currentAccKey.info.map((i: any) => ({
+                      ...i,
+                      relative: +Number(
+                        (i.absolute / currentAccKey.share) * 100
+                      ).toFixed(2),
+                    })),
+                    {
+                      name,
+                      isThirdParty,
+                      ...(isThirdParty ? { hostname } : {}),
+                      size: compressedSize,
+                      absolute: +Number(instantSharePercent * 100).toFixed(2),
+                      relative: +Number(
+                        ((instantSharePercent * 100) / currentAccKey.share) *
+                          100
+                      ).toFixed(2),
+                    },
+                  ],
+                }
+              : {
+                  size: compressedSize,
+                  share: instantSharePercent * 100,
+                  info: [
+                    {
+                      name,
+                      isThirdParty,
+                      ...(isThirdParty ? { hostname } : {}),
+                      size: compressedSize,
+                      absolute: +Number(instantSharePercent * 100).toFixed(2),
+                      relative: 100,
+                    },
+                  ],
+                };
+          }
+          return acc;
+        }, {} as Record<string, any>);
 
-      // const recordsByFileSizePercentage = Object.keys(recordsByFileSize).map(
-      //   (key) => {
-      //     const value = (
-      //       (recordsByFileSize[key].share / totalTransfersize) *
-      //       100
-      //     ).toFixed(2);
+      const totalWattageFunction = () => {
+        let size = totalComputableTransfersize / (MB_TO_BYTES * GB_TO_MB);
 
-      //     return {
-      //       [key]: value,
-      //     };
-      //   }
-      // );
-      const totalWattage = records.map((record) => {
-        let size;
-        if (record.size !== 0) {
-          size = record.size;
-        } else {
-          size = record.unSize;
-        }
-
-        size /= MB_TO_BYTES * GB_TO_MB;
         if (traces.server.energySource && traces.server.energySource.isGreen) {
           size *= variables.coreNetwork[0];
         } else {
@@ -169,11 +119,14 @@ export default class CarbonFootprintAudit extends Audit {
         }
 
         return size;
-      });
+      };
+
+      const totalComputedWattage = totalWattageFunction();
+
       // Apply references values
       debug("computing carbon footprint metric");
       const metric =
-        sum(totalWattage) *
+        totalComputedWattage *
         variables.defaultCarbonIntensity[0] *
         variables.defaultDailyVisitors[0];
 
@@ -189,8 +142,8 @@ export default class CarbonFootprintAudit extends Audit {
         extendedInfo: {
           value: {
             extra: {
-              totalTransfersize: [totalTransfersize, "bytes"],
-              totalWattage: [sum(totalWattage).toFixed(10), "kWh"],
+              totalTransfersize: [totalComputableTransfersize, "bytes"],
+              totalComputedWattage: [totalComputedWattage.toFixed(10), "kWh"],
               carbonfootprint: [metric.toFixed(5), "gCO2eq / 100 views"],
             },
             share: recordsByFileSize,
