@@ -65,11 +65,8 @@ export default class CollectTransfer extends Collect {
       const client = await page.target().createCDPSession();
       await client.send("Network.enable");
 
-      client.on("Network.dataReceived", (data: any) => {
-        const length =
-          data?.encodedDataLength > 0
-            ? data.encodedDataLength
-            : data.dataLength;
+      client.on("Network.loadingFinished", (data: any) => {
+        const length = data?.encodedDataLength;
         const { requestId } = data;
         CDP.push({
           requestId,

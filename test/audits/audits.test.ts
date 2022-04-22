@@ -1556,7 +1556,12 @@ describe("AvoidInlineAssets audit", () => {
             {
               src: "http://localhost#styles[0]",
               text: "",
-              size: 3000,
+              size: 9000,
+            },
+            {
+              src: "http://localhost#styles[1]",
+              text: "",
+              size: 9000,
             },
           ],
           styleHrefs: [{ src: "http://localhost", attr: ["defer"] }],
@@ -1569,7 +1574,7 @@ describe("AvoidInlineAssets audit", () => {
       },
     } as Traces);
     expect(auditResult.score).toEqual(0);
-    expect(auditResult?.extendedInfo?.value.length).toEqual(1);
+    expect(auditResult?.extendedInfo?.value.length).toEqual(2);
   });
   it("passess successful audits", async () => {
     const auditResult = await AvoidInlineAssetsAudit.audit({
@@ -1601,7 +1606,7 @@ describe("AvoidInlineAssets audit", () => {
             {
               src: "http://localhost#styles[0]",
               text: "some-inline-css",
-              size: 9800,
+              size: 15000,
             },
           ],
           styleHrefs: [{ src: "http://localhost", attr: ["defer"] }],
@@ -1617,7 +1622,7 @@ describe("AvoidInlineAssets audit", () => {
     expect(auditResult?.extendedInfo?.value).toEqual([
       {
         name: "http://localhost#styles[0]",
-        size: 9800,
+        size: 15000,
         text: "some-inline-css",
       },
     ]);
@@ -1937,7 +1942,7 @@ describe("CarbonFootprintAudit", () => {
 
     const extraResult = {
       carbonfootprint: ["0.03383", "gCO2eq / 100 views"],
-      totalComputedWattage: ["0.0000011235", "kWh"],
+      totalWattage: ["0.0000011235", "kWh"],
       totalTransfersize: [23200, "bytes"],
     };
 

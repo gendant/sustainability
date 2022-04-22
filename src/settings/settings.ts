@@ -70,6 +70,7 @@ export const DEFAULT: DefaultSettings = {
       "--password-store=basic",
       "--use-gl=swiftshader",
       "--use-mock-keychain",
+      "--disk-cache-size=0",
     ],
   },
   CONNECTION_SETTINGS: {

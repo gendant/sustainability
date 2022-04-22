@@ -1,5 +1,11 @@
 # Changelog
 
+## v. 0.6.1 (22/4/2022)
+
+- Fixes compressedSize bug
+- Renames totalComputedWattage to totalWattage
+- Updates AvoidInlineAssets Audit to 14kB threshold
+
 ## v. 0.6.0 (11/4/2022)
 
 - Adds accessibility collector

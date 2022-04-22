@@ -84,6 +84,8 @@ export default class UsesCompressionAudit extends Audit {
           const recordUrl = record.request.url;
           if (!hosts.includes(recordUrl.hostname)) return false;
 
+          console.log(recordUrl, compressedSize, originalSize, gzipSize);
+
           return true;
         })
         .map((record) => {
